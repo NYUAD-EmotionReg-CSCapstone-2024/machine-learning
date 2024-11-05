@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import h5py as h5
 
@@ -39,7 +41,8 @@ class SeedVDataset(Dataset):
             List of emotions to include in the dataset
             Defaults to the full list of emotions: ["happy", "sad", "fear", "neutral", "angry"]
         '''
-        self.h5file = h5.File(h5file, "r")
+        self.root = root
+        self.h5file = h5.File(os.path.join(root, h5file), "r")
         self.transform = transform
         self.data_ids = []
 
@@ -58,18 +61,35 @@ class SeedVDataset(Dataset):
         Validate the parameters passed to the dataset. All provided participants, sessions and emotions must be present in the dataset.
         Validate the name of channels.
         '''
+        # for pid in self.participants:
+        #     if str(pid) not in self.h5file:
+        #         raise ValueError(f"Participant {pid} not found in the dataset.")
+        #     for sid in self.sessions:
+        #         if str(sid) not in self.h5file[str(pid)]:
+        #             raise ValueError(f"Session {sid} not found for participant {pid}.")
+        #         for emotion in self.emotions:
+        #             if emotion not in self.h5file[str(pid)][str(sid)]:
+        #                 raise ValueError(f"Emotion {emotion} not found for participant {pid} in session {sid}.")
+        # for channel in self.channels:
+        #     if channel not in channel_mappings:
+        #         raise ValueError(f"Channel {channel} not found in the channel mappings.")
+
         for pid in self.participants:
             if str(pid) not in self.h5file:
-                raise ValueError(f"Participant {pid} not found in the dataset.")
+               print(f"Participant {pid} not found in the dataset.")
+               continue
             for sid in self.sessions:
                 if str(sid) not in self.h5file[str(pid)]:
-                    raise ValueError(f"Session {sid} not found for participant {pid}.")
+                    print(f"Session {sid} not found for participant {pid}.")
+                    continue
                 for emotion in self.emotions:
                     if emotion not in self.h5file[str(pid)][str(sid)]:
-                        raise ValueError(f"Emotion {emotion} not found for participant {pid} in session {sid}.")
+                        print(f"Emotion {emotion} not found for participant {pid} in session {sid}.")
+                        continue
         for channel in self.channels:
             if channel not in channel_mappings:
-                raise ValueError(f"Channel {channel} not found in the channel mappings.")
+                print(f"Channel {channel} not found in the channel mappings.")
+                continue
 
 
     def collect_data_ids(self):

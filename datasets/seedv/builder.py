@@ -8,11 +8,11 @@ from .session_labels import _original_session_labels as session_labels
 
 # CONSTANTS
 _emotion_to_label = {
-    "happy": 0,
-    "sad": 1,
-    "fear": 2,
+    "disgust": 0,
+    "fear": 1,
+    "sad": 2,
     "neutral": 3,
-    "angry": 4
+    "happy": 4
 }
 
 _label_to_emotion = {
@@ -20,6 +20,7 @@ _label_to_emotion = {
     for k, v in _emotion_to_label.items()
 }
 
+# DEFAULTS
 _chunk_duration = 1
 _resample_freq = 250
 _overlap = 0.5
@@ -45,7 +46,7 @@ class SeedVBuilder:
             if file.endswith(".cnt")
         ]
 
-    def build(self, outfile, chunk_duration=_chunk_duration, resample_freq=_resample_freq, overlap=_overlap):
+    def build(self, outfile, overwrite=False, chunk_duration=_chunk_duration, resample_freq=_resample_freq, overlap=_overlap):
         '''
         Build the SEED-V dataset and save it to an HDF5 file.
         outfile: str
@@ -58,20 +59,36 @@ class SeedVBuilder:
             Overlap between consecutive chunks in percent (0-1)
         '''
         outfile_path = os.path.join(self.root_dir, outfile)
-        with h5.File(outfile_path, "w") as f:
+        
+        file_exists = os.path.exists(outfile_path)
+        if file_exists:
+            open_mode = "a" if not overwrite else "w"
+        else:
+            open_mode = "w"
+
+        with h5.File(outfile_path, open_mode) as f:
             for cnt_file in tqdm(self.cnt_files, desc="Processing files"):
                 file_name = os.path.basename(cnt_file)
                 pid, sid, _ = file_name.replace(".cnt", "").split("_")
 
-                print(f"Processing {pid}_{sid}...")
-                raw_data = mne.io.read_raw_cnt(cnt_file, preload=True, verbose=False)
-                n_channels = raw_data.info["nchan"]
-                s_freq = raw_data.info["sfreq"]
-                if resample_freq:
-                    raw_data.resample(resample_freq, verbose=False)
-                    s_freq = resample_freq
-                raw_data.filter(1, 50, verbose=False)
-                raw_data = raw_data.get_data()[:n_channels]
+                if file_exists and pid in f and sid in f[pid]:
+                    print(f"Skipping {cnt_file} as it already exists in the dataset.")
+                    continue
+                
+                try:
+                    # preload = True to load the data into memory, otherwise it takes forever for a single cnt file
+                    raw_data = mne.io.read_raw_cnt(cnt_file, data_format='int32', preload=True, verbose=False)
+                    n_channels = raw_data.info["nchan"]
+                    
+                    s_freq = raw_data.info["sfreq"]
+                    if resample_freq:
+                        raw_data.resample(resample_freq, verbose=False)
+                        s_freq = resample_freq
+                    raw_data.filter(1, 50, verbose=False)
+                    raw_data = raw_data.get_data()[:n_channels]
+                except Exception as e:
+                    print(f"Error processing {cnt_file}: {e}")
+                    continue  # Skip to the next file
 
                 session_info = session_labels[int(sid)]
                 n_samples = int(chunk_duration * s_freq)

@@ -4,4 +4,6 @@ This repository is for handling the development of the machine learning model fo
 
 Datasets: SEED-V
 
-Models: In progress
+Scripts:
+
+`build.py`, `dataset.py`
