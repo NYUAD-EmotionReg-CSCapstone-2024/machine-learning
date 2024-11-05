@@ -1,84 +1,94 @@
+import os
 import torch
 import torch.nn as nn
 
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 
-from models.base import Transformer
+from models.base import BaseModel
 from datasets.seedv.dataset import SeedVDataset
 
+# CONSTANTS
+EPOCHS = 100
+TRAIN_SET_SIZE = 14
+TEST_SET_SIZE = 2
+BATCH_SIZE = 64
+LEARNING_RATE = 1e-3
+EVAL_EVERY = 5
+SAVE_EVERY = 5
+
+# Model Parameters
+N_SAMPLES = 250
+N_CHANNELS = 62
+N_HEADS = 8
+N_LAYERS = 4
+N_CLASSES = 5
+
+# Setup
 participants = [str(i) for i in range(1, 17)]
 sessions = [str(i) for i in range(1, 4)]
 emotions = ["happy", "sad", "fear", "neutral", "angry"]
 
 train_set = SeedVDataset(
     root="/data/SEED-V",
-    h5file="seedv.h5",
-    participants=participants[:14]
+    h5file="seed-v.h5",
+    participants=participants[:TRAIN_SET_SIZE]
 )
 
 test_set = SeedVDataset(
     root="/data/SEED-V",
-    h5file="seedv.h5",
-    participants=participants[14:]
+    h5file="seed-v.h5",
+    participants=participants[:-TEST_SET_SIZE]
 )
 
-train_loader = DataLoader(train_set, batch_size=32, shuffle=True)
-test_loader = DataLoader(test_set, batch_size=32, shuffle=False)
+train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True)
+test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False)
 
+# Evaluation function
 def evaluate(model, test_loader):
     model.eval()
     correct = 0
     total = 0
     with torch.no_grad():
         for data, labels in test_loader:
+            data, labels = data.to(device), labels.to(device)  # Move data to device
             outputs = model(data)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
     return correct / total
 
+# Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# model = ERTNet(
-#     num_classes=5,
-#     num_channels=66,
-#     dropout_rate=0.5,
-#     kernel_length=32,
-#     f1=8,
-#     num_heads=4,
-#     d=4,
-#     f2=16
-# ).to(device)
-model = Transformer(
-    n_channels=62,
-    embed_dim=64,
-    num_heads=4,
-    num_classes=5
+model = BaseModel(
+    n_samples=N_SAMPLES,
+    n_channels=N_CHANNELS,
+    n_heads=N_HEADS,
+    n_layers=N_LAYERS,
+    n_classes=N_CLASSES,
 ).to(device)
 
+# Loss and optimizer
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
-# use tqdm for progress bar
-from tqdm import tqdm
+# Create checkpoint directory if it doesn't exist
+checkpoint_dir = "checkpoints"
+os.makedirs(checkpoint_dir, exist_ok=True)
 
-n_epochs = 100
+# Training loop
 loss_values = []
 avg_loss_values = []
 acc_values = []
 
-# Assuming n_epochs, model, criterion, optimizer, train_loader, and test_loader are defined
-for epoch in range(n_epochs):
+for epoch in range(EPOCHS):
     model.train()
     running_loss = 0.0
     
-    # Wrapping the train_loader with tqdm to show progress
-    with tqdm(total=len(train_loader), desc=f"Epoch {epoch + 1}/{n_epochs}", unit="batch") as pbar:
-        for i, data in enumerate(train_loader):
-            inputs, labels = data
-            inputs = inputs.to(device)
-            labels = labels.to(device)
+    with tqdm(total=len(train_loader), desc=f"Epoch {epoch + 1}/{EPOCHS}", unit="batch") as pbar:
+        for i, (inputs, labels) in enumerate(train_loader):
+            inputs, labels = inputs.to(device), labels.to(device)
 
             optimizer.zero_grad()
 
@@ -90,26 +100,31 @@ for epoch in range(n_epochs):
             loss_values.append(loss.item())
             running_loss += loss.item()
             
-            # Update the progress bar with the loss
-            pbar.set_postfix({"loss": running_loss / (i + 1)})  # Average loss for the current epoch
-            pbar.update(1)  # Increment the progress bar
+            pbar.set_postfix({"loss": running_loss / (i + 1)})
+            pbar.update(1)
 
-    # Print the average loss for the epoch
     avg_loss_value = running_loss / len(train_loader)
     avg_loss_values.append(avg_loss_value)
-    print(f"Epoch {epoch + 1}, Average Loss: {avg_loss_value:.4f}")
+    print(f"Average Loss: {avg_loss_value:.4f}")
 
-    # Evaluate the model on the test set
-    acc = evaluate(model, test_loader)
-    acc_values.append(acc)
-    print(f"Accuracy: {acc:.4f}")
+    # Evaluate the model every 5 epochs
+    if (epoch + 1) % EVAL_EVERY == 0:
+        acc = evaluate(model, test_loader)
+        acc_values.append(acc)
+        print(f"Accuracy: {acc:.4f}")
+
+    # Save model checkpoint every 5 epochs
+    if (epoch + 1) % SAVE_EVERY == 0:
+        checkpoint_path = os.path.join(checkpoint_dir, f"model_epoch_{epoch + 1}.pth")
+        torch.save(model.state_dict(), checkpoint_path)
+        print(f"Checkpoint saved to {checkpoint_path}")
 
 print('Finished Training')
 
-# save the model
-torch.save(model.state_dict(), "seedv_transformer.pth")
+# Save the final model
+torch.save(model.state_dict(), "seedv_transformer_final.pth")
 
-# plot the loss and acc values and save the plot
+# Plot the loss and accuracy values
 import matplotlib.pyplot as plt
 
 plt.figure(figsize=(12, 4))
@@ -128,3 +143,13 @@ plt.legend()
 
 plt.tight_layout()
 plt.savefig("training_plot.png")
+
+# Save the losses and accuracies
+import pickle
+
+with open("./checkpoints/metrics.pkl", "wb") as f:
+    pickle.dump({
+        "loss": loss_values,
+        "avg_loss": avg_loss_values,
+        "accuracy": acc_values
+    }, f)
