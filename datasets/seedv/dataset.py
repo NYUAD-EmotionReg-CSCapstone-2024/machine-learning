@@ -1,4 +1,5 @@
 import os
+import torch
 
 import numpy as np
 import h5py as h5
@@ -9,18 +10,23 @@ from .channel_mappings import _channel_mappings as channel_mappings
 
 # CONSTANTS
 _emotion_to_label = {
-    "happy": 0,
-    "sad": 1,
-    "fear": 2,
+    "disgust": 0,
+    "fear": 1,
+    "sad": 2,
     "neutral": 3,
-    "angry": 4
+    "happy": 4
+}
+
+_label_to_emotion = {
+    v:k 
+    for k, v in _emotion_to_label.items()
 }
 
 # Exhastive list of participants, sessions, emotions, and channels
-_participants = list(range(1, 16))
-_sessions = list(range(1, 4))
-_emotions = list(_emotion_to_label.keys())
-_channels = list(channel_mappings.keys())
+_participants = [str(i) for i in range(1, 17)]
+_sessions = [str(i) for i in range(1, 4)]
+_emotions = [str(emotion) for emotion in _emotion_to_label.keys()]
+_channels = [str(key) for key in channel_mappings.keys()]
 
 class SeedVDataset(Dataset):
     def __init__(self, root, h5file, transform=None, participants=_participants, sessions=_sessions, emotions=_emotions, channels=_channels):
@@ -61,40 +67,29 @@ class SeedVDataset(Dataset):
         Validate the parameters passed to the dataset. All provided participants, sessions and emotions must be present in the dataset.
         Validate the name of channels.
         '''
-        # for pid in self.participants:
-        #     if str(pid) not in self.h5file:
-        #         raise ValueError(f"Participant {pid} not found in the dataset.")
-        #     for sid in self.sessions:
-        #         if str(sid) not in self.h5file[str(pid)]:
-        #             raise ValueError(f"Session {sid} not found for participant {pid}.")
-        #         for emotion in self.emotions:
-        #             if emotion not in self.h5file[str(pid)][str(sid)]:
-        #                 raise ValueError(f"Emotion {emotion} not found for participant {pid} in session {sid}.")
-        # for channel in self.channels:
-        #     if channel not in channel_mappings:
-        #         raise ValueError(f"Channel {channel} not found in the channel mappings.")
-
         for pid in self.participants:
             if str(pid) not in self.h5file:
-               print(f"Participant {pid} not found in the dataset.")
-               continue
+                raise ValueError(f"Participant {pid} not found in the dataset.")
             for sid in self.sessions:
-                if str(sid) not in self.h5file[str(pid)]:
-                    print(f"Session {sid} not found for participant {pid}.")
+                # escape participant 7 session 1 (not working yet, need to fix)
+                if str(pid) == "7" and str(sid) == "1":
                     continue
+                if str(sid) not in self.h5file[str(pid)]:
+                    raise ValueError(f"Session {sid} not found for participant {pid}.")
                 for emotion in self.emotions:
                     if emotion not in self.h5file[str(pid)][str(sid)]:
-                        print(f"Emotion {emotion} not found for participant {pid} in session {sid}.")
-                        continue
+                        raise ValueError(f"Emotion {emotion} not found for participant {pid} in session {sid}.")
         for channel in self.channels:
             if channel not in channel_mappings:
-                print(f"Channel {channel} not found in the channel mappings.")
-                continue
+                raise ValueError(f"Channel {channel} not found in the channel mappings.")
 
 
     def collect_data_ids(self):
         for pid in self.participants:
             for sid in self.sessions:
+                # escape participant 7 session 1 (not working yet, need to fix)
+                if str(pid) == "7" and str(sid) == "1":
+                    continue
                 for emotion in self.emotions:
                     data_ids = list(self.h5file[str(pid)][str(sid)][emotion].keys())
                     self.data_ids.extend(data_ids)
@@ -110,6 +105,12 @@ class SeedVDataset(Dataset):
         start_idx = int(start_idx)
         chunk = self.h5file[pid][sid][emotion][data_id][()]
         chunk = chunk[self.channel_ids]
+        
+        chunk = torch.tensor(chunk, dtype=torch.float32)
+        chunk = chunk.permute(1, 0)
+        label = torch.tensor(_emotion_to_label[emotion], dtype=torch.long)
+
         if self.transform:
             chunk = self.transform(chunk)
-        return chunk, _emotion_to_label[emotion]
+
+        return chunk, label

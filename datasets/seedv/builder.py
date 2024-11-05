@@ -96,7 +96,6 @@ class SeedVBuilder:
                 for start_sec, end_sec, label in zip(session_info["start"], session_info["end"], session_info["labels"]):
                     start_idx = int(start_sec * s_freq)
                     end_idx = int(end_sec * s_freq)
-                    emotion = _label_to_emotion[label]
 
                     overlap_samples = int(n_samples * overlap)
 
@@ -105,11 +104,11 @@ class SeedVBuilder:
                         chunk = raw_data[:, i:i+n_samples]
                         if chunk.shape[1] < n_samples: # ignore the last chunk if it's too short
                             continue
-                        p_group = f.require_group(f'{pid}')
-                        s_group = p_group.require_group(f'{sid}')
-                        e_group = s_group.require_group(emotion)
+                        p_group = f.require_group(str(pid))
+                        s_group = p_group.require_group(str(sid))
+                        e_group = s_group.require_group(str(label))
 
-                        chunk_id = f"{pid}_{sid}_{emotion}_{i}"
+                        chunk_id = f"{pid}_{sid}_{label}_{i}"
                         e_group.create_dataset(chunk_id, data=chunk, chunks=True, compression="gzip")
 
         print(f"Dataset with frequency {s_freq} Hz and chunk duration {chunk_duration} sec saved to {outfile_path}.")
