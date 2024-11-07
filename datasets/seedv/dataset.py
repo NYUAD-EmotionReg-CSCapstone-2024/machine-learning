@@ -32,6 +32,8 @@ class SeedVDataset(Dataset):
         emotions: list
             List of emotions to include in the dataset
             Defaults to the full list of emotions: ["happy", "sad", "fear", "neutral", "angry"]
+        channels: list
+            List of channels to include in the dataset
         '''
         self.root = root
         self.h5file = h5.File(os.path.join(root, h5file), "r")

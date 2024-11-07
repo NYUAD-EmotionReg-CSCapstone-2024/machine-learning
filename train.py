@@ -7,8 +7,7 @@ from torch.utils.data import DataLoader
 
 # from models.conv_tansformer import BaseModel
 # from models.base_model import BaseModel as Model
-# from models.base_transformer import BaseTransformer as Model
-from models.base_transformer import BaseModel as Model
+from models.base_transformer import BaseTransformer as Model
 
 from datasets.seedv.dataset import SeedVDataset
 
