@@ -1,5 +1,7 @@
 import os
 import mne
+
+import numpy as np
 import h5py as h5
 
 from tqdm import tqdm
@@ -22,8 +24,10 @@ _label_to_emotion = {
 
 # DEFAULTS
 _chunk_duration = 1
-_resample_freq = 250
+_resample_freq = 200
 _overlap = 0.5
+
+_channels_to_drop = ['M1', 'M2', 'VEO', 'HEO']
 
 class SeedVBuilder:
     '''
@@ -46,7 +50,14 @@ class SeedVBuilder:
             if file.endswith(".cnt")
         ]
 
-    def build(self, outfile, overwrite=False, chunk_duration=_chunk_duration, resample_freq=_resample_freq, overlap=_overlap):
+    def build(
+            self, 
+            outfile, 
+            overwrite=False, 
+            chunk_duration=_chunk_duration, 
+            resample_freq=_resample_freq, 
+            overlap=_overlap,
+        ):
         '''
         Build the SEED-V dataset and save it to an HDF5 file.
         outfile: str
@@ -76,16 +87,16 @@ class SeedVBuilder:
                     continue
                 
                 try:
-                    # preload = True to load the data into memory, otherwise it takes forever for a single cnt file
+                    # preload = True to load the data into memory, otherwise it takes forever
                     raw_data = mne.io.read_raw_cnt(cnt_file, data_format='int32', preload=True, verbose=False)
-                    n_channels = raw_data.info["nchan"]
+                    raw_data.drop_channels(_channels_to_drop) # drop unused channels
                     
                     s_freq = raw_data.info["sfreq"]
                     if resample_freq:
                         raw_data.resample(resample_freq, verbose=False)
-                        s_freq = resample_freq
+                        s_freq = resample_freq # update s_freq to new freq
                     raw_data.filter(1, 50, verbose=False)
-                    raw_data = raw_data.get_data()[:n_channels]
+                    raw_data = raw_data.get_data()
                 except Exception as e:
                     print(f"Error processing {cnt_file}: {e}")
                     continue  # Skip to the next file
@@ -93,6 +104,7 @@ class SeedVBuilder:
                 session_info = session_labels[int(sid)]
                 n_samples = int(chunk_duration * s_freq)
 
+                # data is in (n_channels, n_samples) format
                 for start_sec, end_sec, label in zip(session_info["start"], session_info["end"], session_info["labels"]):
                     start_idx = int(start_sec * s_freq)
                     end_idx = int(end_sec * s_freq)
@@ -102,6 +114,7 @@ class SeedVBuilder:
                     # iterate through chunks
                     for i in range(start_idx, end_idx, n_samples - overlap_samples):
                         chunk = raw_data[:, i:i+n_samples]
+                        breakpoint()
                         if chunk.shape[1] < n_samples: # ignore the last chunk if it's too short
                             continue
                         p_group = f.require_group(str(pid))

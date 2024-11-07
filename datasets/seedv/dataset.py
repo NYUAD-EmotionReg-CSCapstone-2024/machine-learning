@@ -6,26 +6,12 @@ import h5py as h5
 
 from torch.utils.data.dataset import Dataset
 
-from .channel_mappings import _channel_mappings as channel_mappings
-
-# CONSTANTS
-_emotion_to_label = {
-    "disgust": 0,
-    "fear": 1,
-    "sad": 2,
-    "neutral": 3,
-    "happy": 4
-}
-
-_label_to_emotion = {
-    v:k 
-    for k, v in _emotion_to_label.items()
-}
+from .channel_mappings import _channel_info as channel_mappings
 
 # Exhastive list of participants, sessions, emotions, and channels
 _participants = [str(i) for i in range(1, 17)]
 _sessions = [str(i) for i in range(1, 4)]
-_emotions = [str(emotion) for emotion in _emotion_to_label.keys()]
+_emotions = [str(emotion) for emotion in range(5)]
 _channels = [str(key) for key in channel_mappings.keys()]
 
 class SeedVDataset(Dataset):
@@ -108,7 +94,7 @@ class SeedVDataset(Dataset):
         
         chunk = torch.tensor(chunk, dtype=torch.float32)
         chunk = chunk.permute(1, 0)
-        label = torch.tensor(_emotion_to_label[emotion], dtype=torch.long)
+        label = torch.tensor(int(emotion), dtype=torch.long)
 
         if self.transform:
             chunk = self.transform(chunk)
