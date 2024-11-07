@@ -114,7 +114,6 @@ class SeedVBuilder:
                     # iterate through chunks
                     for i in range(start_idx, end_idx, n_samples - overlap_samples):
                         chunk = raw_data[:, i:i+n_samples]
-                        breakpoint()
                         if chunk.shape[1] < n_samples: # ignore the last chunk if it's too short
                             continue
                         p_group = f.require_group(str(pid))
