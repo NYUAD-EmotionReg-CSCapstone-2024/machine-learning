@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class BaseTransformer(nn.Module):
-    def __init__(self, n_samples, n_channels, n_classes):
+    def __init__(self, n_samples=200, n_channels=62, n_classes=5):
         super(BaseTransformer, self).__init__()
         self.embedding = nn.Linear(n_channels, 128)
 

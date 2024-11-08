@@ -19,20 +19,6 @@ class ConvHead(nn.Module):
         x = self.pool(x) # --> (batch_size, 200, 4, 4)
         return x.view(x.size(0), -1) # Flatten to (batch_size, 200 * 4 * 4)
 
-# class PositionalEncoding(nn.Module):
-#     def __init__(self, d_model, max_len): # (d_model, n_samples)
-#         super(PositionalEncoding, self).__init__()
-#         self.encoding = torch.zeros(max_len, d_model)
-#         position = torch.arange(0, max_len).unsqueeze(1).float()
-#         div_term = torch.exp(torch.arange(0, d_model, 2).float() * -(torch.log(torch.tensor(10000.0)) / d_model))
-#         self.encoding[:, 0::2] = torch.sin(position * div_term)
-#         self.encoding[:, 1::2] = torch.cos(position * div_term)
-#         self.encoding = self.encoding.unsqueeze(0)
-    
-#     def forward(self, x):
-#         return x + self.encoding.to(x.device)
-    
-
 class TransformerHead(nn.Module):
     def __init__(self, d_model, n_heads, n_layers):
         super(TransformerHead, self).__init__()
@@ -46,12 +32,12 @@ class TransformerHead(nn.Module):
         return x[:, -1, :]  # Get the last output
 
 class BaseModel(nn.Module):
-    def __init__(self, n_samples, n_classes, n_channels, n_heads, n_layers):
+    def __init__(self, n_samples=200, n_classes=5, n_channels=62, n_heads=2, n_layers=6):
         super(BaseModel, self).__init__()
         d_model = 64
         self.fc_proj = nn.Linear(n_channels, d_model)
         self.conv_head = ConvHead(n_samples) # --> (batch_size, d_model)
-        self.conv_proj = nn.Linear(200 * 4 * 4, d_model)
+        self.conv_proj = nn.Linear(16 * 4 * 4, d_model)
         self.transformer_head = TransformerHead(
             d_model=d_model, 
             n_heads=n_heads, 
