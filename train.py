@@ -16,6 +16,7 @@ def get_model(model_name):
         "base_mlp": "models.base_mlp.BaseModel",
         "base_transformer": "models.base_transformer.BaseTransformer",
         "conv_transformer": "models.conv_transformer.BaseModel",
+        "ertnet": "models.ERTNet.ERTNet"
     }
     if model_name in models:
         module_name, class_name = models[model_name].rsplit(".", 1)
