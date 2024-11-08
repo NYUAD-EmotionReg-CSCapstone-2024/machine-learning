@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 class BaseModel(nn.Module):
-    def __init__(self, n_samples, n_channels, n_classes):
+    def __init__(self, n_samples=200, n_channels=62, n_classes=5):
         super(BaseModel, self).__init__()
         self.linear1 = nn.Linear(n_samples * n_channels, 8192)
         self.linear2 = nn.Linear(8192, 2048)

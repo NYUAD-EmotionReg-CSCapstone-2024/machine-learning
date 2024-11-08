@@ -45,12 +45,12 @@ class SeedVDataset(Dataset):
         self.emotions = emotions
         self.channels = channels
 
-        self.validate_params()
-        self.collect_data_ids()
+        self._validate_params()
+        self._collect_data_ids()
         
         self.channel_ids = [channel_mappings[channel]["index"] for channel in self.channels]
 
-    def validate_params(self):
+    def _validate_params(self):
         '''
         Validate the parameters passed to the dataset. All provided participants, sessions and emotions must be present in the dataset.
         Validate the name of channels.
@@ -72,7 +72,7 @@ class SeedVDataset(Dataset):
                 raise ValueError(f"Channel {channel} not found in the channel mappings.")
 
 
-    def collect_data_ids(self):
+    def _collect_data_ids(self):
         for pid in self.participants:
             for sid in self.sessions:
                 # escape participant 7 session 1 (not working yet, need to fix)
@@ -82,11 +82,11 @@ class SeedVDataset(Dataset):
                     data_ids = list(self.h5file[str(pid)][str(sid)][emotion].keys())
                     self.data_ids.extend(data_ids)
         np.random.shuffle(self.data_ids)
-        
+
 
     def __len__(self):
         return len(self.data_ids)
-    
+
     def __getitem__(self, idx):
         data_id = self.data_ids[idx]
         pid, sid, emotion, start_idx = data_id.split("_")
