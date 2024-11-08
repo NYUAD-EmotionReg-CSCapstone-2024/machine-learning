@@ -1,11 +1,11 @@
 import pickle
 import matplotlib.pyplot as plt
 
-EXP_NUM = 2
+EXP_NUM = 3
 
 EXP_DIR = f'./experiments/exp_{EXP_NUM}'
 
-metrics_file_path = f'{EXP_DIR}/metrics.pkl'
+metrics_file_path = f'{EXP_DIR}/model_epoch_10.pth'
 
 with open(metrics_file_path, 'rb') as f:
     metrics = pickle.load(f)

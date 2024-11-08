@@ -2,7 +2,7 @@ import argparse
 
 from datasets.seedv.builder import SeedVBuilder
 
-SEEDV_ROOT = "/data/SEED-V"
+SEEDV_ROOT = "./data/SEED-V"
 
 # DEFAULTS
 CHUNK_DURATION = 1

@@ -1,3 +1,10 @@
 venv/
 
 **/__pycache__/
+
+# Ignore data and experiments folders
+data/
+experiments/
+project_layout.txt
+get-pip.py
+

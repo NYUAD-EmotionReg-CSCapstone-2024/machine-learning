@@ -5,19 +5,20 @@ import torch.nn as nn
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 
-# from models.conv_tansformer import BaseModel
+# from models.conv_tansformer import BaseModel as Model
+from models.cnn1d import CNN1D as Model
 # from models.base_model import BaseModel as Model
 # from models.base_transformer import BaseTransformer as Model
-from models.base_transformer import BaseModel as Model
+# from models.base_transformer import BaseModel as Model
 
 from datasets.seedv.dataset import SeedVDataset
 
 # CONSTANTS
 EPOCHS = 100
-TRAIN_SET_SIZE = 14
+TRAIN_SET_SIZE = 14 
 TEST_SET_SIZE = 2
-BATCH_SIZE = 512
-LEARNING_RATE = 2.25e-3
+BATCH_SIZE = 8192
+LEARNING_RATE = 1e-2
 EVAL_EVERY = 5
 SAVE_EVERY = 5
 
@@ -32,19 +33,21 @@ EXP_NUM = 3
 EXP_DIR = f"./experiments/exp_{EXP_NUM}"
 CHECKPOINT_DIR = f"{EXP_DIR}/checkpoints"
 
+
+
 # Setup
 participants = [str(i) for i in range(1, 17)]
 sessions = [str(i) for i in range(1, 4)]
 emotions = ["happy", "sad", "fear", "neutral", "angry"]
 
 train_set = SeedVDataset(
-    root="/data/SEED-V",
+    root="./data/SEED-V",
     h5file="seedv.h5",
     participants=participants[:TRAIN_SET_SIZE]
 )
 
 test_set = SeedVDataset(
-    root="/data/SEED-V",
+    root="./data/SEED-V",
     h5file="seedv.h5",
     participants=participants[:-TEST_SET_SIZE]
 )
@@ -76,6 +79,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #     n_layers=N_LAYERS,
 #     n_classes=N_CLASSES,
 # ).to(device)
+
 
 model = Model(
     n_samples=N_SAMPLES,
