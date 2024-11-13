@@ -8,10 +8,14 @@ from torch.utils.data.dataset import Dataset
 
 from .channel_mappings import _channel_info as channel_mappings
 
+_total_participants = 16
+_total_sessions = 3
+_total_emotions = 5
+
 # Exhastive list of participants, sessions, emotions, and channels
-_participants = [str(i) for i in range(1, 17)]
-_sessions = [str(i) for i in range(1, 4)]
-_emotions = [str(emotion) for emotion in range(5)]
+_participants = [str(i) for i in range(1, _total_participants + 1)]
+_sessions = [str(i) for i in range(1, _total_sessions + 1)]
+_emotions = [str(emotion) for emotion in range(_total_emotions)]
 _channels = [str(key) for key in channel_mappings.keys()]
 
 class SeedVDataset(Dataset):
@@ -89,13 +93,12 @@ class SeedVDataset(Dataset):
 
     def __getitem__(self, idx):
         data_id = self.data_ids[idx]
-        pid, sid, emotion, start_idx = data_id.split("_")
-        start_idx = int(start_idx)
+        pid, sid, emotion, _ = data_id.split("_")
+
         chunk = self.h5file[pid][sid][emotion][data_id][()]
         chunk = chunk[self.channel_ids]
         
         chunk = torch.tensor(chunk, dtype=torch.float32)
-        chunk = chunk.permute(1, 0)
         label = torch.tensor(int(emotion), dtype=torch.long)
 
         if self.transform:
