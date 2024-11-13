@@ -30,21 +30,21 @@ class DatasetFactory:
 
 class SplitterFactory:
     SPLITTERS = {
-        "randomsplitter": {
+        "random": {
             "splitter": RandomSplitter,
             "mandatory_params": ["dataset"],
             "optional_params": ["train_ratio", "shuffle"]
         },
+        "lnso": {
+            "splitter": LNSOSplitter,
+            "mandatory_params": ["dataset"],
+            "optional_params": ["num_participants", "shuffle"]
+        }
         # "kfoldsplitter": {
         #     "splitter": KFoldSplitter,
         #     "mandatory_params": ["dataset"],
         #     "optional_params": ["k", "shuffle"]
         # },
-        # "lnsosplitter": {
-        #     "splitter": LNSOSplitter,
-        #     "mandatory_params": ["dataset"],
-        #     "optional_params": ["num_participants", "shuffle"]
-        # }
     }
 
     @classmethod

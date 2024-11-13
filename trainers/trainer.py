@@ -2,6 +2,9 @@ import os
 import shutil
 import logging
 import torch
+
+import matplotlib.pyplot as plt
+
 from abc import ABC
 from tqdm import tqdm
 
@@ -16,8 +19,13 @@ class Trainer(ABC):
         self.exp_dir = exp_dir
 
         self._setup_directories(exp_dir)
-        self.best_val_loss = float("inf")
         self.early_stopping_counter = 0
+        self.metrics = {
+            "best_val_loss": float("inf"),
+            "train_loss": [],
+            "val_loss": [],
+            "acc": []
+        }
 
     @property
     def device(self):
@@ -36,6 +44,7 @@ class Trainer(ABC):
     def _setup_directories(self, exp_dir):
         """Create necessary directories for saving checkpoints and logs."""
         self.checkpoint_dir = os.path.join(exp_dir, "checkpoints")
+        self.latest_checkpoint = os.path.join(self.checkpoint_dir, "latest_checkpoint.pth")
         os.makedirs(self.checkpoint_dir, exist_ok=True)
 
     def _cleanup_dir(self, exp_dir):
@@ -59,22 +68,22 @@ class Trainer(ABC):
         checkpoint = torch.load(checkpoint_path, weights_only=True)
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        self.best_val_loss = checkpoint["loss"]
+        self.metrics = checkpoint["metrics"]
         epoch = checkpoint["epoch"]
         self.logger.info(f"\n\nResuming from epoch {epoch + 1}")
         self.logger.info(f"Checkpoint loaded from {checkpoint_path}")
         return epoch
 
-    def _save_checkpoint(self, epoch):
+    def _save_checkpoint(self, epoch, checkpoint_path, latest=False):
         """Save checkpoint at the end of each epoch."""
-        checkpoint_path = os.path.join(self.checkpoint_dir, f"model_epoch_{epoch + 1}.pth")
-        torch.save({
-            "epoch": epoch,
+        checkpoint_data = {
             "model_state_dict": self.model.state_dict(),
             "optimizer_state_dict": self.optimizer.state_dict(),
-            "loss": self.best_val_loss
-        }, checkpoint_path)
-        self.logger.info(f"Checkpoint saved to {checkpoint_path}")
+        }
+        if latest:
+            checkpoint_data["epoch"] = epoch
+            checkpoint_data["metrics"] = self.metrics
+        torch.save(checkpoint_data, checkpoint_path)
 
     def _evaluate(self):
         """Evaluate model performance on the validation set."""
@@ -113,17 +122,16 @@ class Trainer(ABC):
 
     def _resume_training(self):
         """Resume training from the last saved checkpoint."""
-        checkpoint_files = [file for file in os.listdir(self.checkpoint_dir) if file.endswith(".pth")]
-        if not checkpoint_files:
+        # check if latest checkpoint exists
+        latest_checkpoint = os.path.join(self.checkpoint_dir, "latest_checkpoint.pth")
+        if not os.path.exists(latest_checkpoint):
             self._setup_logger(self.exp_dir, mode="w")
             self.logger.info("No checkpoint found to resume training")
             self.logger.info("Starting fresh training")
             return 0
 
         self._setup_logger(self.exp_dir, mode="a")
-        latest_checkpoint = max(checkpoint_files, key=lambda x: int(x.split("_")[-1].split(".")[0]))
-        checkpoint_path = os.path.join(self.checkpoint_dir, latest_checkpoint)
-        return self._load_checkpoint(checkpoint_path)
+        return self._load_checkpoint(latest_checkpoint)
 
     def _prepare_for_training(self, resume):
         """Prepare either for fresh training or resume from a checkpoint."""
@@ -139,6 +147,35 @@ class Trainer(ABC):
             self._setup_logger(self.exp_dir, mode="w")
             self._log_model_info()
         return start_epoch
+    
+    def _plot_metrics(self, eval_every):
+        # plot train_loss, validation_loss, and val_acc
+        fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+        eval_epochs = list(range(eval_every, len(self.metrics["val_loss"]) * eval_every + 1, eval_every))
+
+        # Plot training loss (x-axis: epochs, y-axis: train loss)
+        ax[0].plot(self.metrics["train_loss"], label="Train Loss")
+        ax[0].set_title("Training Loss")
+        ax[0].set_xlabel("Epoch")
+        ax[0].set_ylabel("Loss")
+        ax[0].legend()
+
+        # Plot validation loss (x-axis: evaluation epochs, y-axis: val loss)
+        ax[1].plot(eval_epochs, self.metrics["val_loss"], label="Validation Loss", color="orange")
+        ax[1].set_title("Validation Loss")
+        ax[1].set_xlabel("Epoch")
+        ax[1].set_ylabel("Loss")
+        ax[1].legend()
+
+        # Plot validation accuracy (x-axis: evaluation epochs, y-axis: val acc)
+        ax[2].plot(eval_epochs, self.metrics["acc"], label="Validation Accuracy", color="green")
+        ax[2].set_title("Validation Accuracy")
+        ax[2].set_xlabel("Epoch")
+        ax[2].set_ylabel("Accuracy")
+        ax[2].legend()
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(self.exp_dir, "metrics.png"))
 
     def train(self, epochs, eval_every, resume=False):
         """Main training loop with early stopping and periodic evaluation."""
@@ -155,18 +192,30 @@ class Trainer(ABC):
                 acc, val_loss = self._evaluate()
                 self.logger.info(f"Epoch: {epoch + 1}, Accuracy: {acc:.4f}, Validation Loss: {val_loss:.4f}")
 
-                if val_loss < self.best_val_loss:
-                    self.best_val_loss = val_loss
+                if val_loss < self.metrics["best_val_loss"]:
+                    self.metrics["best_val_loss"] = val_loss
                     self.early_stopping_counter = 0
-                    self._save_checkpoint(epoch)
+                    checkpoint_path = os.path.join(self.checkpoint_dir, f"checkpoint_{epoch+1}.pth")
+                    self._save_checkpoint(epoch, checkpoint_path)
                 else:
                     self.early_stopping_counter += 1
                     if self.early_stopping_counter > self.patience:
                         self.logger.info("Early stopping")
                         break
+                
+                self.metrics["val_loss"].append(val_loss)
+                self.metrics["acc"].append(acc)
+
+            self.metrics["train_loss"].append(train_loss)
+
+            # Save latest model
+            self._save_checkpoint(epoch, self.latest_checkpoint, latest=True)
 
         # Final checkpoint if training ends without early stopping
-        if val_loss and val_loss < self.best_val_loss:
+        if val_loss and val_loss < self.metrics["best_val_loss"]:
             self._save_checkpoint(epoch)
 
-        self.logger.info("Training completed successfully")
+        self._plot_metrics(eval_every)
+        plot_path = os.path.join(self.exp_dir, "metrics.png")
+        self.logger.info(f"Metrics plotted to {plot_path}")
+        self.logger.info("\nTraining completed successfully")

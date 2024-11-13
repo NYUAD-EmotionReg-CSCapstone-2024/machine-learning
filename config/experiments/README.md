@@ -19,7 +19,7 @@ dataset:
 
 # Splitter configuration
 splitter:
-  name: "randomsplitter"
+  name: "random"
   params:
     train_size: 0.8
 
