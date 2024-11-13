@@ -70,11 +70,15 @@ def main(args):
         model=model,
         loss_fn=loss_fn,
         optimizer=optimizer,
-        patience=config["patience"],
         exp_dir=os.path.join(config["exp_dir"], f"exp_{config['exp_num']}"),
     )
 
-    trainer.train(config["epochs"], config["eval_every"], resume=args.resume)
+    trainer.train(
+        epochs=config["epochs"], 
+        eval_every=config["eval_every"], 
+        patience=config["patience"],
+        resume=args.resume
+    )
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a model on the SEED-V dataset")

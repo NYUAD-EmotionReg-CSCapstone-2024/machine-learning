@@ -2,6 +2,7 @@ import os
 import shutil
 import logging
 import torch
+import torch.nn.functional as F
 
 import matplotlib.pyplot as plt
 
@@ -9,13 +10,12 @@ from abc import ABC
 from tqdm import tqdm
 
 class Trainer(ABC):
-    def __init__(self, train_loader, val_loader, model, loss_fn, optimizer, patience, exp_dir):
+    def __init__(self, train_loader, val_loader, model, loss_fn, optimizer, exp_dir):
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.model = model
         self.loss_fn = loss_fn
         self.optimizer = optimizer
-        self.patience = patience
         self.exp_dir = exp_dir
 
         self._setup_directories(exp_dir)
@@ -94,7 +94,7 @@ class Trainer(ABC):
             with tqdm(total=len(self.val_loader), desc="Validation Iterations", leave=False) as pbar:
                 for data, labels in self.val_loader:
                     data, labels = data.to(self.device), labels.to(self.device)
-                    outputs = self.model(data)
+                    outputs = F.softmax(self.model(data), dim=1) # manually apply softmax
                     val_loss += self.loss_fn(outputs, labels).item()
                     _, predicted = torch.max(outputs.data, 1)
                     correct += (predicted == labels).sum().item()
@@ -177,8 +177,16 @@ class Trainer(ABC):
         plt.tight_layout()
         plt.savefig(os.path.join(self.exp_dir, "metrics.png"))
 
-    def train(self, epochs, eval_every, resume=False):
+    def train(self, epochs, eval_every, patience, resume=False):
         """Main training loop with early stopping and periodic evaluation."""
+
+        assert eval_every <= epochs, \
+            "Evaluation frequency must be less than total epochs"
+        assert patience >= eval_every, \
+            "Patience must be greater than or equal to evaluation frequency"
+        assert patience % eval_every == 0, \
+            "Patience must be divisible by evaluation frequency"
+
         start_epoch = self._prepare_for_training(resume)
 
         acc, val_loss = None, None
@@ -198,8 +206,8 @@ class Trainer(ABC):
                     checkpoint_path = os.path.join(self.checkpoint_dir, f"checkpoint_{epoch+1}.pth")
                     self._save_checkpoint(epoch, checkpoint_path)
                 else:
-                    self.early_stopping_counter += 1
-                    if self.early_stopping_counter > self.patience:
+                    self.early_stopping_counter += eval_every
+                    if self.early_stopping_counter > patience:
                         self.logger.info("Early stopping")
                         break
                 
@@ -217,6 +225,6 @@ class Trainer(ABC):
 
         # Plot metrics
         self._plot_metrics(eval_every)
-        self.logger.info(f"Metrics plotted to {os.path.join(self.exp_dir, "metrics.png")}")
+        self.logger.info(f"Metrics plotted to {os.path.join(self.exp_dir, 'metrics.png')}")
 
         self.logger.info("\nTraining completed successfully")

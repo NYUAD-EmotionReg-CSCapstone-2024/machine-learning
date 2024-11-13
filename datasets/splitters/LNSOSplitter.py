@@ -35,9 +35,9 @@ class LNSOSplitter(DatasetSplitter):
             self.test_participants: Set[str] = set(num_participants)
             self.train_subjects: Set[str] = set(self.participants) - self.test_participants
         else:
-            if num_participants < 1 or num_participants > len(self.participants):
+            if num_participants < 1 or num_participants >= len(self.participants):
                 raise ValueError(f"Invalid number of participants: {num_participants}. \
-                                   Must be between 1 and {len(self.participants)}.")
+                                   Must be between 1 and {len(self.participants)-1}.")
             self.num_participants: int = num_participants
             self.test_participants: Set[str] = set(self.participants[:self.num_participants])
             self.train_participants: Set[str] = set(self.participants[self.num_participants:])
