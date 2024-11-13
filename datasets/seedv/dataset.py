@@ -19,9 +19,9 @@ _emotions = [str(emotion) for emotion in range(_total_emotions)]
 _channels = [str(key) for key in channel_mappings.keys()]
 
 class SeedVDataset(Dataset):
-    def __init__(self, root, h5file, transform=None, participants=_participants, sessions=_sessions, emotions=_emotions, channels=_channels):
+    def __init__(self, root_dir, h5file, transform=None, participants=_participants, sessions=_sessions, emotions=_emotions, channels=_channels):
         '''
-        root: str
+        root_dir: str
             Path to the root directory containing the dataset
         h5file: str
             Path to the h5 file containing the dataset
@@ -39,8 +39,8 @@ class SeedVDataset(Dataset):
         channels: list
             List of channels to include in the dataset
         '''
-        self.root = root
-        self.h5file = h5.File(os.path.join(root, h5file), "r")
+        self.root_dir = root_dir
+        self.h5file = h5.File(os.path.join(root_dir, h5file), "r")
         self.transform = transform
         self.data_ids = []
 
@@ -69,6 +69,7 @@ class SeedVDataset(Dataset):
                 if str(sid) not in self.h5file[str(pid)]:
                     raise ValueError(f"Session {sid} not found for participant {pid}.")
                 for emotion in self.emotions:
+                    emotion = str(emotion)
                     if emotion not in self.h5file[str(pid)][str(sid)]:
                         raise ValueError(f"Emotion {emotion} not found for participant {pid} in session {sid}.")
         for channel in self.channels:
@@ -83,7 +84,7 @@ class SeedVDataset(Dataset):
                 if str(pid) == "7" and str(sid) == "1":
                     continue
                 for emotion in self.emotions:
-                    data_ids = list(self.h5file[str(pid)][str(sid)][emotion].keys())
+                    data_ids = list(self.h5file[str(pid)][str(sid)][str(emotion)].keys())
                     self.data_ids.extend(data_ids)
         np.random.shuffle(self.data_ids)
 

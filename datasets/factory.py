@@ -5,8 +5,8 @@ class DatasetFactory:
     DATASETS = {
         "seedv": {
             "dataset": SeedVDataset,
-            "mandatory_params": ["data_dir", "split", "sfreq"],
-            "optional_params": ["transform"]
+            "mandatory_params": ["root_dir", "h5file"],
+            "optional_params": ["transform", "participants", "sessions", "emotions", "channels"]
         }
     }
 

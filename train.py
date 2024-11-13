@@ -12,12 +12,19 @@ from trainers import Trainer
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 loss_fn = nn.CrossEntropyLoss()
 
-def get_optimizer(model, optimizer_name, lr=1e-3):
+def get_optimizer(model, optimizer_name, **kwargs):
     optimizers = {
-        "adam": torch.optim.Adam,
+        "adam": {
+            "optimizer": torch.optim.Adam,
+            "mandatory_params": ["lr"]
+        }
     }
     if optimizer_name in optimizers:
-        return optimizers[optimizer_name](model.parameters(), lr=lr)
+        config = optimizers[optimizer_name]
+        for param in config["mandatory_params"]:
+            if param not in kwargs:
+                raise ValueError(f"Missing parameter: {param}")
+        return config["optimizer"](model.parameters(), **kwargs)
     raise ValueError(f"Invalid optimizer: {optimizer_name}")
 
 
@@ -54,7 +61,7 @@ def main(args):
     optimizer = get_optimizer(
         model, 
         config["optimizer"]["name"], 
-        lr=config["optimizer"]["lr"]
+        **config["optimizer"]["params"]
     )
 
     trainer = Trainer(
@@ -64,7 +71,7 @@ def main(args):
         loss_fn=loss_fn,
         optimizer=optimizer,
         patience=config["patience"],
-        exp_dir=os.path.join(config["root_dir"], config["exp_dir"], f"exp_{config['exp_num']}"),
+        exp_dir=os.path.join(config["exp_dir"], f"exp_{config['exp_num']}"),
     )
 
     trainer.train(config["epochs"], config["eval_every"], resume=args.resume)
