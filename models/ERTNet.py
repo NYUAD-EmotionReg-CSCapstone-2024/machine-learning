@@ -47,7 +47,7 @@ class ERTNet(nn.Module):
         
         self.sep_conv = nn.Conv1d(F1 * D, F2, 16, padding=16 // 2, bias=False)
         self.bn3 = nn.BatchNorm1d(F2)
-        
+
         self.pos_encoder = PositionalEncoding(F2)
         self.transformer = TransformerBlock(F2, heads, dropoutRate)
         
