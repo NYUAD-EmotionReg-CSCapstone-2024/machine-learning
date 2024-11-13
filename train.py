@@ -8,15 +8,15 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from datasets.seedv.dataset import SeedVDataset
+from datasets.splitters.RandomSplitter import RandomSplit
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def get_model(model_name):
     models = {
-        "base_mlp": "models.base_mlp.BaseModel",
-        "base_transformer": "models.base_transformer.BaseTransformer",
         "conv_transformer": "models.conv_transformer.BaseModel",
-        "ertnet": "models.ERTNet.ERTNet"
+        "ertnet": "models.ERTNet.ERTNet",
+        "atcnet": "models.atcnet.ATCNet"
     }
     if model_name in models:
         module_name, class_name = models[model_name].rsplit(".", 1)
@@ -152,27 +152,27 @@ class TrainLoop:
         with open(os.path.join(self.experiment_dir, "model_info.txt"), "w") as f:
             num_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
             f.write(f"Number of params: {num_params}\n")
-            f.write(str(self.model))
+            f.write(f"Model: {self.model}\n")
 
 def main(args):
-    config_path = os.path.join("./configs/experiments", f"{args.config}.yaml")
+    config_path = os.path.join("./configs/experiments", f"exp_{args.config}.yaml")
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found: {args.config}")
 
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
-    # Prepare dataset
-    train_set = SeedVDataset(
+    dataset = SeedVDataset(
         root=config["root_dir"],
         h5file=f"{config['dataset']}.h5",
-        participants=config["participants"][:config["trainset_size"]]
+        participants=config["participants"],
     )
-    test_set = SeedVDataset(
-        root=config["root_dir"],
-        h5file=f"{config['dataset']}.h5",
-        participants=config["participants"][-config["testset_size"]:]
-    )
+
+    # Split the dataset into train and test sets
+    split = RandomSplit(dataset)
+    train_set = split.trainset
+    test_set = split.testset
+
     train_loader = DataLoader(train_set, batch_size=config["batch_size"], shuffle=True)
     test_loader = DataLoader(test_set, batch_size=config["batch_size"], shuffle=False)
 

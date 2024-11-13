@@ -4,6 +4,6 @@ venv/
 
 experiments/
 
-# Ignore everything inside configs/
-configs/*
-!configs/**/README.md
+# Ignore everything inside config/
+config/*.yaml
+config/**/*.yaml
