@@ -1,3 +1,8 @@
+# Dataset Builder Config Example
+
+Create a file with name `set_{uniq_num}.yaml`. An example config is here.
+
+```yaml
 root_dir: "/data/SEED-V"
 dataset: "seedv"
 outfile: "seedv4s0o"
@@ -9,3 +14,4 @@ bandpass_freqs:
   - 50
 resample_freq: 200
 normalize: True
+```

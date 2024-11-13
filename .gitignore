@@ -2,3 +2,8 @@ venv/
 
 **/__pycache__/
 
+experiments/
+
+# Ignore everything inside configs/
+configs/*
+!configs/**/README.md
