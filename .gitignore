@@ -1,3 +1,9 @@
 venv/
 
 **/__pycache__/
+
+experiments/
+
+# Ignore everything inside config/
+config/*.yaml
+config/**/*.yaml

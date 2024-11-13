@@ -1,31 +1,16 @@
 import os
 import mne
+import warnings
 
-import numpy as np
 import h5py as h5
 
 from tqdm import tqdm
 
+from ..EEGPreprocessor import EEGPreprocessor
 from .session_labels import _original_session_labels as session_labels
 
-# CONSTANTS
-_emotion_to_label = {
-    "disgust": 0,
-    "fear": 1,
-    "sad": 2,
-    "neutral": 3,
-    "happy": 4
-}
-
-_label_to_emotion = {
-    v:k 
-    for k, v in _emotion_to_label.items()
-}
-
-# DEFAULTS
-_chunk_duration = 1
-_resample_freq = 200
-_overlap = 0.5
+# Ignore cnt file warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 _channels_to_drop = ['M1', 'M2', 'VEO', 'HEO']
 
@@ -39,6 +24,8 @@ class SeedVBuilder:
                 - chunk_id: numpy array of shape (n_channels, n_samples)
     root_dir: str
         Path to the directory containing the SEED-V dataset
+    preprocessors: list
+        List of preprocessors to apply to the raw EEG data
     '''
     def __init__(self, root_dir):
         self.root_dir = root_dir
@@ -53,29 +40,35 @@ class SeedVBuilder:
     def build(
             self, 
             outfile, 
-            overwrite=False, 
-            chunk_duration=_chunk_duration, 
-            resample_freq=_resample_freq, 
-            overlap=_overlap,
+            overwrite,
+            chunk_duration, 
+            overlap,
+            preprocessors
         ):
         '''
         Build the SEED-V dataset and save it to an HDF5 file.
         outfile: str
             HDF5 output file name
+        overwrite: bool
+            Whether to overwrite the existing file
         chunk_duration: int
             Duration of each chunk in seconds
         resample_freq: int
             Frequency to resample the EEG data to
         overlap: int
             Overlap between consecutive chunks in percent (0-1)
+        preprocessors: list
+            List of preprocessors to apply to the raw EEG data
+            notch, bandpass, resample, eog_removal, normalize
         '''
         outfile_path = os.path.join(self.root_dir, outfile)
         
         file_exists = os.path.exists(outfile_path)
-        if file_exists:
-            open_mode = "a" if not overwrite else "w"
-        else:
-            open_mode = "w"
+        open_mode = "w"
+        if file_exists and not overwrite:
+            open_mode = "a"
+
+        eeg_preprocessor = EEGPreprocessor()
 
         with h5.File(outfile_path, open_mode) as f:
             for cnt_file in tqdm(self.cnt_files, desc="Processing files"):
@@ -90,21 +83,15 @@ class SeedVBuilder:
                     # preload = True to load the data into memory, otherwise it takes forever
                     raw_data = mne.io.read_raw_cnt(cnt_file, data_format='int32', preload=True, verbose=False)
                     raw_data.drop_channels(_channels_to_drop) # drop unused channels
-                    
+                    raw_data = eeg_preprocessor.preprocess(raw_data, preprocessors) # apply diff filters
                     s_freq = raw_data.info["sfreq"]
-                    if resample_freq:
-                        raw_data.resample(resample_freq, verbose=False)
-                        s_freq = resample_freq # update s_freq to new freq
-                    raw_data.filter(1, 50, verbose=False)
-                    raw_data = raw_data.get_data()
+                    raw_data = raw_data.get_data() # (n_samples, n_channels) ndarray
                 except Exception as e:
                     print(f"Error processing {cnt_file}: {e}")
                     continue  # Skip to the next file
 
-                session_info = session_labels[int(sid)]
+                session_info = session_labels[int(sid)] # ground truth labels for the sessions
                 n_samples = int(chunk_duration * s_freq)
-
-                # data is in (n_channels, n_samples) format
                 for start_sec, end_sec, label in zip(session_info["start"], session_info["end"], session_info["labels"]):
                     start_idx = int(start_sec * s_freq)
                     end_idx = int(end_sec * s_freq)
