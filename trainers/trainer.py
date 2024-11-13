@@ -215,7 +215,8 @@ class Trainer(ABC):
         if val_loss and val_loss < self.metrics["best_val_loss"]:
             self._save_checkpoint(epoch)
 
+        # Plot metrics
         self._plot_metrics(eval_every)
-        plot_path = os.path.join(self.exp_dir, "metrics.png")
-        self.logger.info(f"Metrics plotted to {plot_path}")
+        self.logger.info(f"Metrics plotted to {os.path.join(self.exp_dir, "metrics.png")}")
+
         self.logger.info("\nTraining completed successfully")
