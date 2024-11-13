@@ -64,7 +64,7 @@ class LNSOSplitter(DatasetSplitter):
             pid = data_id.split("_")[0]
 
             # Assign to train or test set based on participant ID
-            if pid in self.train_participants:
+            if int(pid) in self.train_participants:
                 self.train_indices.append(idx)
             else:
                 self.test_indices.append(idx)
