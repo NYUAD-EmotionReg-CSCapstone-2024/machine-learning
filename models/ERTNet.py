@@ -57,8 +57,6 @@ class ERTNet(nn.Module):
 
     def forward(self, x):
         # x shape: (batch_size, seq_length, features)
-        x = x.transpose(1, 2)  # Change to (batch_size, features, seq_length)
-        
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.depthwise_conv(x)
@@ -82,5 +80,4 @@ class ERTNet(nn.Module):
         x = self.global_avg_pool(x).squeeze(2)
         x = self.dropout2(x)
         x = self.dense(x)
-        x = F.softmax(x, dim=1)
         return x

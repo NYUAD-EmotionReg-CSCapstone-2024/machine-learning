@@ -9,7 +9,6 @@ from datasets import DatasetFactory, SplitterFactory
 from models import ModelFactory
 from trainers import Trainer
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 loss_fn = nn.CrossEntropyLoss()
 
 def get_optimizer(model, optimizer_name, **kwargs):
@@ -17,7 +16,11 @@ def get_optimizer(model, optimizer_name, **kwargs):
         "adam": {
             "optimizer": torch.optim.Adam,
             "mandatory_params": ["lr"]
-        }
+        },
+        "adamw": {
+            "optimizer": torch.optim.AdamW,
+            "mandatory_params": ["lr"]
+        },
     }
     if optimizer_name in optimizers:
         config = optimizers[optimizer_name]
@@ -36,13 +39,16 @@ def main(args):
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
+    device = torch.device(config["device"])
+
     dataset = DatasetFactory.get_dataset(
         config["dataset"]["name"], 
         **config["dataset"]["params"]
     )
+
     splitter = SplitterFactory.get_splitter(
         config["splitter"]["name"], 
-        dataset=dataset, 
+        dataset=dataset,
         **config["splitter"]["params"]
     )
 
@@ -70,7 +76,8 @@ def main(args):
         model=model,
         loss_fn=loss_fn,
         optimizer=optimizer,
-        exp_dir=os.path.join(config["exp_dir"], f"exp_{config['exp_num']}"),
+        device=device,
+        exp_dir=os.path.join(config["exp_dir"], f"exp_{args.config}"),
     )
 
     trainer.train(

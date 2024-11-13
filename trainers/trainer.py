@@ -1,4 +1,5 @@
 import os
+import time
 import shutil
 import logging
 import torch
@@ -10,13 +11,14 @@ from abc import ABC
 from tqdm import tqdm
 
 class Trainer(ABC):
-    def __init__(self, train_loader, val_loader, model, loss_fn, optimizer, exp_dir):
+    def __init__(self, train_loader, val_loader, model, loss_fn, optimizer, device, exp_dir):
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.model = model
         self.loss_fn = loss_fn
         self.optimizer = optimizer
         self.exp_dir = exp_dir
+        self.device = device
 
         self._setup_directories(exp_dir)
         self.early_stopping_counter = 0
@@ -26,10 +28,6 @@ class Trainer(ABC):
             "val_loss": [],
             "acc": []
         }
-
-    @property
-    def device(self):
-        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def _setup_logger(self, exp_dir, mode="w"):
         """Set up the logger to log training information."""

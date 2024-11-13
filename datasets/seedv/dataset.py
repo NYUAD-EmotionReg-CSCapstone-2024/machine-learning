@@ -2,6 +2,7 @@ import os
 import torch
 
 import numpy as np
+
 import h5py as h5
 
 from torch.utils.data.dataset import Dataset
@@ -19,7 +20,7 @@ _emotions = [str(emotion) for emotion in range(_total_emotions)]
 _channels = [str(key) for key in channel_mappings.keys()]
 
 class SeedVDataset(Dataset):
-    def __init__(self, root_dir, h5file, transform=None, participants=_participants, sessions=_sessions, emotions=_emotions, channels=_channels):
+    def __init__(self, root_dir, h5file, transform=None, participants=_participants, sessions=_sessions, emotions=_emotions, channels=_channels, load_all=False):
         '''
         root_dir: str
             Path to the root directory containing the dataset
@@ -51,8 +52,13 @@ class SeedVDataset(Dataset):
 
         self._validate_params()
         self._collect_data_ids()
-        
+
         self.channel_ids = [channel_mappings[channel]["index"] for channel in self.channels]
+
+        self.load_all = load_all
+        if load_all:
+            self._load_all()
+        
 
     def _validate_params(self):
         '''
@@ -88,19 +94,38 @@ class SeedVDataset(Dataset):
                     self.data_ids.extend(data_ids)
         np.random.shuffle(self.data_ids)
 
+    def _load_all(self):
+        self.data = []
+        self.labels = []
+        for data_id in self.data_ids:
+            pid, sid, emotion, _ = data_id.split("_")
+            chunk = self.h5file[pid][sid][emotion][data_id][()]
+            chunk = chunk[self.channel_ids]
+            self.data.append(chunk)
+            self.labels.append(int(emotion))
 
     def __len__(self):
         return len(self.data_ids)
+    
+    def _get_from_memory(self, idx):
+        chunk = torch.tensor(self.data[idx], dtype=torch.float32)
+        label = torch.tensor(self.labels[idx], dtype=torch.long)
+        return chunk, label
 
-    def __getitem__(self, idx):
+    def _get_from_h5(self, idx):
         data_id = self.data_ids[idx]
         pid, sid, emotion, _ = data_id.split("_")
-
         chunk = self.h5file[pid][sid][emotion][data_id][()]
         chunk = chunk[self.channel_ids]
-        
         chunk = torch.tensor(chunk, dtype=torch.float32)
         label = torch.tensor(int(emotion), dtype=torch.long)
+        return chunk, label
+
+    def __getitem__(self, idx):
+        if self.load_all:
+            chunk, label = self._get_from_memory(idx)
+        else:
+            chunk, label = self._get_from_h5(idx)
 
         if self.transform:
             chunk = self.transform(chunk)

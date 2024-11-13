@@ -1,10 +1,15 @@
 from .atcnet import ATCNet
+from .ERTNet import ERTNet
 
 class ModelFactory:
     MODELS = {
         "atcnet": {
             "model": ATCNet,
             "mandatory_params": ["n_chans", "n_classes", "input_window_seconds", "sfreq"]
+        },
+        "ertnet": {
+            "model": ERTNet,
+            "mandatory_params": [],
         }
     }
 

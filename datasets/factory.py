@@ -6,7 +6,7 @@ class DatasetFactory:
         "seedv": {
             "dataset": SeedVDataset,
             "mandatory_params": ["root_dir", "h5file"],
-            "optional_params": ["transform", "participants", "sessions", "emotions", "channels"]
+            "optional_params": ["transform", "participants", "sessions", "emotions", "channels", "load_all"]
         }
     }
 
