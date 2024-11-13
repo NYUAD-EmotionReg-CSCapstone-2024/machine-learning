@@ -7,12 +7,12 @@ class RandomSplitter(DatasetSplitter):
     Randomly split the dataset into training and testing sets.
     Args:
         dataset (Dataset): The dataset to be split.
-        ratio (float): The ratio of the training set.
+        train_ratio (float): The ratio of the training set.
         shuffle (bool): Whether to shuffle the dataset before splitting.
     """
-    def __init__(self, dataset, ratio=0.8, shuffle=True):
+    def __init__(self, dataset, train_ratio=0.8, shuffle=True):
         super().__init__(dataset, shuffle)
-        self.ratio = ratio
+        self.ratio = train_ratio
         self.indices = list(range(len(dataset)))
         
         if self.shuffle:

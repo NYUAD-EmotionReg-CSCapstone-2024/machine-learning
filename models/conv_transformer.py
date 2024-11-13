@@ -31,9 +31,9 @@ class TransformerHead(nn.Module):
         x = self.transformer(x)  # Shape: (batch_size, seq_len, d_model)
         return x[:, -1, :]  # Get the last output
 
-class BaseModel(nn.Module):
+class ConvTransformer(nn.Module):
     def __init__(self, n_samples=200, n_classes=5, n_channels=62, n_heads=2, n_layers=6):
-        super(BaseModel, self).__init__()
+        super(ConvTransformer, self).__init__()
         d_model = 64
         self.fc_proj = nn.Linear(n_channels, d_model)
         self.conv_head = ConvHead(n_samples) # --> (batch_size, d_model)

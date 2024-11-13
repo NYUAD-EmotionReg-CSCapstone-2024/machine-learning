@@ -2,7 +2,7 @@ import os
 import shutil
 import logging
 import torch
-from abc import ABC, abstractmethod
+from abc import ABC
 from tqdm import tqdm
 
 class Trainer(ABC):
