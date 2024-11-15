@@ -31,7 +31,7 @@ Create a train config file inside `config/experiments` named `exp_{uniq_num}.yam
 ```yaml
 # Experiment configuration
 exp_dir: "./experiments"
-exp_num: 1
+device: "cuda:0"
 
 # Dataset configuration
 dataset:
@@ -42,6 +42,7 @@ dataset:
     participants: [1, 2]
     sessions: [1, 2, 3]
     emotions: [0, 1, 2, 3, 4]
+    load_all: False # make it True if you have enough memory
 
 # Model configuration
 model:
