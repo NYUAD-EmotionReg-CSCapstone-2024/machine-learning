@@ -20,7 +20,7 @@ _emotions = [str(emotion) for emotion in range(_total_emotions)]
 _channels = [str(key) for key in channel_mappings.keys()]
 
 class SeedVDataset(Dataset):
-    def __init__(self, root_dir, h5file, transform=None, participants=_participants, sessions=_sessions, emotions=_emotions, channels=_channels, load_all=False):
+    def __init__(self, root_dir, h5file, transform=None, participants=_participants, sessions=_sessions, emotions=_emotions, channels=_channels, load=False):
         '''
         root_dir: str
             Path to the root directory containing the dataset
@@ -55,9 +55,9 @@ class SeedVDataset(Dataset):
 
         self.channel_ids = [channel_mappings[channel]["index"] for channel in self.channels]
 
-        self.load_all = load_all
-        if load_all:
-            self._load_all()
+        self.load = load
+        if load:
+            self._load_in_memory()
         
 
     def _validate_params(self):
@@ -94,7 +94,7 @@ class SeedVDataset(Dataset):
                     self.data_ids.extend(data_ids)
         np.random.shuffle(self.data_ids)
 
-    def _load_all(self):
+    def _load_in_memory(self):
         self.data = []
         self.labels = []
         for data_id in self.data_ids:
@@ -122,7 +122,7 @@ class SeedVDataset(Dataset):
         return chunk, label
 
     def __getitem__(self, idx):
-        if self.load_all:
+        if self.load:
             chunk, label = self._get_from_memory(idx)
         else:
             chunk, label = self._get_from_h5(idx)

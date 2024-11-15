@@ -1,31 +1,33 @@
+import torch
+
+from utils.factory import BaseFactory
+
 from .atcnet import ATCNet
 from .ERTNet import ERTNet
 
-class ModelFactory:
-    MODELS = {
+class ModelFactory(BaseFactory):
+    REGISTRY = {
         "atcnet": {
             "model": ATCNet,
-            "mandatory_params": ["n_chans", "n_classes", "input_window_seconds", "sfreq"]
+            "mandatory_params": ["n_chans", "n_classes", "input_window_seconds", "sfreq"],
         },
         "ertnet": {
             "model": ERTNet,
             "mandatory_params": [],
         }
     }
+    ITEM_KEY = "model"
 
-    @classmethod
-    def get_model(cls, model_name, **kwargs):
-        if model_name not in cls.MODELS:
-            raise ValueError(f"Invalid model: {model_name}")
-        
-        config = cls.MODELS[model_name]
-        
-        # Check for mandatory parameters
-        for param in config["mandatory_params"]:
-            if param not in kwargs:
-                raise ValueError(f"Missing parameter: {param}")
-        
-        # Filter out valid parameters
-        valid_params = {k: kwargs[k] for k in config["mandatory_params"] if k in kwargs}
-        
-        return config["model"](**valid_params)
+
+class OptimizerFactory(BaseFactory):
+    REGISTRY = {
+        "adam": {
+            "optimizer": torch.optim.Adam,
+            "mandatory_params": ["lr"],
+        },
+        "adamw": {
+            "optimizer": torch.optim.AdamW,
+            "mandatory_params": ["lr"],
+        }
+    }
+    ITEM_KEY = "optimizer"

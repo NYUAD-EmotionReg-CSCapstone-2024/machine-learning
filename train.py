@@ -6,30 +6,11 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from datasets import DatasetFactory, SplitterFactory
-from models import ModelFactory
+from models import ModelFactory, OptimizerFactory
+
 from trainers import Trainer
 
 loss_fn = nn.CrossEntropyLoss()
-
-def get_optimizer(model, optimizer_name, **kwargs):
-    optimizers = {
-        "adam": {
-            "optimizer": torch.optim.Adam,
-            "mandatory_params": ["lr"]
-        },
-        "adamw": {
-            "optimizer": torch.optim.AdamW,
-            "mandatory_params": ["lr"]
-        },
-    }
-    if optimizer_name in optimizers:
-        config = optimizers[optimizer_name]
-        for param in config["mandatory_params"]:
-            if param not in kwargs:
-                raise ValueError(f"Missing parameter: {param}")
-        return config["optimizer"](model.parameters(), **kwargs)
-    raise ValueError(f"Invalid optimizer: {optimizer_name}")
-
 
 def main(args):
     config_path = os.path.join("./config/experiments", f"exp_{args.config}.yaml")
@@ -41,12 +22,12 @@ def main(args):
 
     device = torch.device(config["device"])
 
-    dataset = DatasetFactory.get_dataset(
-        config["dataset"]["name"], 
-        **config["dataset"]["params"]
+    dataset = DatasetFactory.create(
+        config["dataset"]["name"],
+        **config["dataset"]["params"],
+        load=args.load
     )
-
-    splitter = SplitterFactory.get_splitter(
+    splitter = SplitterFactory.create(
         config["splitter"]["name"], 
         dataset=dataset,
         **config["splitter"]["params"]
@@ -59,14 +40,14 @@ def main(args):
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
 
-    model = ModelFactory.get_model(
+    model = ModelFactory.create(
         config["model"]["name"], 
         **config["model"]["params"]
     ).to(device)
 
-    optimizer = get_optimizer(
-        model, 
+    optimizer = OptimizerFactory.create(
         config["optimizer"]["name"], 
+        model.parameters(),
         **config["optimizer"]["params"]
     )
 
@@ -90,6 +71,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a model on the SEED-V dataset")
     parser.add_argument("--config", type=str, required=True, help="Path to the configuration file (without .yaml extension)")
+    parser.add_argument("--load", action="store_true", help="Load the dataset in memory for faster training")
     parser.add_argument("--resume", action="store_true", help="Resume training from the latest checkpoint")
     args = parser.parse_args()
     main(args)
