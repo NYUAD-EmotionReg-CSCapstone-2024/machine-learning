@@ -1,9 +1,16 @@
-venv/
+# Environemnt Variables
+.env
 
+# Virtual Environments
+venv/
+.venv/
+
+# Pycache files
 **/__pycache__/
 
+# Experiment logs/models
 experiments/
 
-# Ignore everything inside config/
+# Config files
 config/*.yaml
 config/**/*.yaml
