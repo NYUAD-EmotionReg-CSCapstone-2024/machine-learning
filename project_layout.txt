@@ -1,0 +1,261 @@
+--- Folder Layout ---
+[.git] (...)
+.gitignore
+build.py
+[config]
+    ├── [datasets]
+        ├── set_0.yaml
+        ├── set_1.yaml
+        └── set_2.yaml
+    └── [experiments]
+        ├── exp_1.yaml
+        ├── exp_2.yaml
+        ├── exp_3.yaml
+        ├── exp_4.yaml
+        ├── exp_5.yaml
+        └── exp_6.yaml
+[data]
+    └── [SEED-V]
+        ├── [EEG_raw]
+            ├── 10_1_20180507.cnt
+            ├── 10_2_20180524.cnt
+            ├── 10_3_20180626.cnt
+            ├── 11_1_20180510.cnt
+            ├── 11_2_20180508.cnt
+            ├── 11_3_20180522.cnt
+            ├── 12_1_20180515.cnt
+            ├── 12_2_20180508.cnt
+            ├── 12_3_20180517.cnt
+            ├── 13_1_20180720.cnt
+            ├── 13_2_20180806.cnt
+            ├── 13_3_20180725.cnt
+            ├── 14_1_20180420.cnt
+            ├── 14_2_20180423.cnt
+            ├── 14_3_20180427.cnt
+            ├── 15_1_20180724.cnt
+            ├── 15_2_20180807.cnt
+            ├── 15_3_20180730.cnt
+            ├── 16_1_20180805.cnt
+            ├── 16_2_20180815.cnt
+            ├── 16_3_20180813.cnt
+            ├── 1_1_20180804.cnt
+            ├── 1_2_20180810.cnt
+            ├── 1_3_20180808.cnt
+            ├── 2_1_20180416.cnt
+            ├── 2_2_20180419.cnt
+            ├── 2_3_20180425.cnt
+            ├── 3_1_20180414.cnt
+            ├── 3_2_20180419.cnt
+            ├── 3_3_20180424.cnt
+            ├── 4_1_20180414.cnt
+            ├── 4_2_20180417.cnt
+            ├── 4_3_20180501.cnt
+            ├── 5_1_20180719.cnt
+            ├── 5_2_20180728.cnt
+            ├── 5_3_20180723.cnt
+            ├── 6_1_20180713.cnt
+            ├── 6_2_20180731.cnt
+            ├── 6_3_20180802.cnt
+            ├── 7_1_20180411.cnt
+            ├── 7_2_20180418.cnt
+            ├── 7_3_20180422.cnt
+            ├── 8_1_20180717.cnt
+            ├── 8_2_20180802.cnt
+            ├── 8_3_20180726.cnt
+            ├── 9_1_20180724.cnt
+            ├── 9_2_20180804.cnt
+            ├── 9_3_20180728.cnt
+            └── Load_cnt_file_with_mne.ipynb
+        ├── scratch.h5
+        ├── scratch2.h5
+        ├── scratch3.h5
+        ├── scratch4.h5
+        ├── scratch5.h5
+        ├── seedv.h5
+        └── seedv4s0o.h5
+[datasets]
+    ├── [deap]
+        ├── builder.py
+        ├── dataset.py
+        └── __init__.py
+    ├── EEGPreprocessor.py
+    ├── factory.py
+    ├── [seedv]
+        ├── builder.py
+        ├── channel_mappings.py
+        ├── dataset.py
+        ├── session_labels.py
+        ├── __init__.py
+        └── [__pycache__] (...)
+    ├── [splitters]
+        ├── DatasetSplitter.py
+        ├── KFoldSplitter.py
+        ├── LNSOSplitter.py
+        ├── RandomSplitter.py
+        ├── __init__.py
+        └── [__pycache__] (...)
+    ├── __init__.py
+    └── [__pycache__] (...)
+dataset_viewer.ipynb
+[experiments]
+    ├── [exp_1]
+        ├── [checkpoints]
+        └── model_info.txt
+    ├── [exp_3]
+        ├── [checkpoints]
+            ├── model_epoch_10.pth
+            ├── model_epoch_100.pth
+            ├── model_epoch_15.pth
+            ├── model_epoch_20.pth
+            ├── model_epoch_25.pth
+            ├── model_epoch_30.pth
+            ├── model_epoch_35.pth
+            ├── model_epoch_40.pth
+            ├── model_epoch_45.pth
+            ├── model_epoch_5.pth
+            ├── model_epoch_50.pth
+            ├── model_epoch_55.pth
+            ├── model_epoch_60.pth
+            ├── model_epoch_65.pth
+            ├── model_epoch_70.pth
+            ├── model_epoch_75.pth
+            ├── model_epoch_80.pth
+            ├── model_epoch_85.pth
+            ├── model_epoch_90.pth
+            ├── model_epoch_95.pth
+            └── seedv_transformer_final.pth
+        ├── metrics.pkl
+        ├── model_architecture.txt
+        └── plot.png
+    ├── [exp_exp_1]
+        ├── [checkpoints]
+            ├── checkpoint_10.pth
+            ├── checkpoint_125.pth
+            ├── checkpoint_15.pth
+            ├── checkpoint_150.pth
+            ├── checkpoint_160.pth
+            ├── checkpoint_165.pth
+            ├── checkpoint_170.pth
+            ├── checkpoint_175.pth
+            ├── checkpoint_185.pth
+            ├── checkpoint_190.pth
+            ├── checkpoint_20.pth
+            ├── checkpoint_25.pth
+            ├── checkpoint_30.pth
+            ├── checkpoint_35.pth
+            ├── checkpoint_40.pth
+            ├── checkpoint_45.pth
+            ├── checkpoint_5.pth
+            ├── checkpoint_50.pth
+            ├── checkpoint_55.pth
+            ├── checkpoint_60.pth
+            ├── checkpoint_65.pth
+            ├── checkpoint_70.pth
+            ├── checkpoint_75.pth
+            ├── checkpoint_85.pth
+            ├── checkpoint_90.pth
+            ├── checkpoint_95.pth
+            └── latest_checkpoint.pth
+        ├── metrics.png
+    ├── [exp_exp_2]
+        ├── [checkpoints]
+            ├── checkpoint_10.pth
+            ├── checkpoint_115.pth
+            ├── checkpoint_130.pth
+            ├── checkpoint_145.pth
+            ├── checkpoint_15.pth
+            ├── checkpoint_150.pth
+            ├── checkpoint_155.pth
+            ├── checkpoint_160.pth
+            ├── checkpoint_165.pth
+            ├── checkpoint_170.pth
+            ├── checkpoint_175.pth
+            ├── checkpoint_180.pth
+            ├── checkpoint_185.pth
+            ├── checkpoint_190.pth
+            ├── checkpoint_195.pth
+            ├── checkpoint_20.pth
+            ├── checkpoint_200.pth
+            ├── checkpoint_25.pth
+            ├── checkpoint_30.pth
+            ├── checkpoint_35.pth
+            ├── checkpoint_40.pth
+            ├── checkpoint_45.pth
+            ├── checkpoint_5.pth
+            ├── checkpoint_55.pth
+            ├── checkpoint_60.pth
+            ├── checkpoint_65.pth
+            ├── checkpoint_70.pth
+            ├── checkpoint_75.pth
+            ├── checkpoint_90.pth
+            └── latest_checkpoint.pth
+        ├── metrics.png
+    ├── [exp_exp_3]
+        ├── [checkpoints]
+            ├── checkpoint_10.pth
+            ├── checkpoint_15.pth
+            ├── checkpoint_20.pth
+            ├── checkpoint_25.pth
+            ├── checkpoint_30.pth
+            ├── checkpoint_35.pth
+            ├── checkpoint_40.pth
+            ├── checkpoint_5.pth
+            └── latest_checkpoint.pth
+        ├── metrics.png
+    ├── [exp_exp_4]
+        ├── [checkpoints]
+            ├── checkpoint_10.pth
+            ├── checkpoint_15.pth
+            ├── checkpoint_20.pth
+            ├── checkpoint_25.pth
+            ├── checkpoint_30.pth
+            ├── checkpoint_35.pth
+            ├── checkpoint_40.pth
+            ├── checkpoint_45.pth
+            ├── checkpoint_5.pth
+            ├── checkpoint_55.pth
+            ├── checkpoint_80.pth
+            ├── checkpoint_95.pth
+            └── latest_checkpoint.pth
+        ├── metrics.png
+    ├── [exp_exp_5]
+        ├── [checkpoints]
+            ├── checkpoint_10.pth
+            ├── checkpoint_15.pth
+            ├── checkpoint_20.pth
+            ├── checkpoint_25.pth
+            ├── checkpoint_30.pth
+            ├── checkpoint_40.pth
+            ├── checkpoint_5.pth
+            └── latest_checkpoint.pth
+    └── [exp_exp_6]
+        ├── [checkpoints]
+            ├── checkpoint_10.pth
+            ├── checkpoint_15.pth
+            ├── checkpoint_20.pth
+            ├── checkpoint_25.pth
+            ├── checkpoint_30.pth
+            ├── checkpoint_35.pth
+            ├── checkpoint_5.pth
+            └── latest_checkpoint.pth
+get-pip.py
+hpc_setup.sh
+[models]
+    ├── atcnet.py
+    ├── conv_transformer.py
+    ├── ERTNet.py
+    ├── factory.py
+    ├── __init__.py
+    └── [__pycache__] (...)
+project_layout.txt
+ptrain.py
+README.md
+requirements.txt
+train.py
+[trainers]
+    ├── trainer.py
+    ├── __init__.py
+    └── [__pycache__] (...)
+[utils]
+    ├── factory.py
+    └── [__pycache__] (...)

@@ -1,0 +1,13 @@
+Number of parameters: 119419909
+
+Model: BaseModel(
+  (linear1): Linear(in_features=12400, out_features=8192, bias=True)
+  (linear2): Linear(in_features=8192, out_features=2048, bias=True)
+  (dropout): Dropout(p=0.2, inplace=False)
+  (linear3): Linear(in_features=2048, out_features=512, bias=True)
+  (linear4): Linear(in_features=512, out_features=5, bias=True)
+  (relu): ReLU()
+  (softmax): Softmax(dim=1)
+)
+
+Number of Samples (chunk size): 200Number of Channels: 62Epochs: 100Train Set Size: 14Test Set Size: 2Batch Size: 512Learning Rate: 0.00225Evaluation Frequency: 5Save Frequency: 5/n

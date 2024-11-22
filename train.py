@@ -13,9 +13,11 @@ from trainers import Trainer
 loss_fn = nn.CrossEntropyLoss()
 
 def main(args):
-    config_path = os.path.join("./config/experiments", f"exp_{args.config}.yaml")
+    config_path = os.path.join("./config/experiments", f"{args.config}.yaml")
+    print(f"Looking for config file at: {config_path}")  # Debugging line
     if not os.path.exists(config_path):
-        raise FileNotFoundError(f"Config file not found: {args.config}")
+        raise FileNotFoundError(f"Config file not found: {config_path}")
+
 
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)

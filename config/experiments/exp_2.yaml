@@ -1,0 +1,34 @@
+exp_dir: "./experiments"
+device: "cuda:0"
+
+dataset:
+  name: "seedv"
+  params:
+    root_dir: ./data/SEED-V/
+    h5file: scratch3.h5
+    participants: [1]
+
+
+
+splitter:
+  name: "random"
+  params:
+    train_ratio: 0.8
+
+model:
+  name: "atcnet"
+  params:
+    n_chans: 62
+    n_classes: 5
+    input_window_seconds: 6
+    sfreq: 200
+
+optimizer:
+  name: "adam"
+  params:
+    lr: 0.001
+
+epochs: 200
+batch_size: 1024
+eval_every: 5
+patience: 25

@@ -1,0 +1,16 @@
+root_dir: "./data/SEED-V"
+dataset: "seedv"
+outfile: "scratch5"
+
+chunk_duration: 6    # Increased from 4 to 8 seconds
+overlap: 0.5        # Added 50% overlap for more training samples
+
+
+notch_freq: 50
+bandpass_freqs:
+  - 0.5  # Lower bound to catch slower emotional responses
+  - 80   # Upper bound to include high-frequency neural activity
+
+resample_freq: 200  
+normalize: True   
+

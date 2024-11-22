@@ -16,7 +16,7 @@ ALL_PARAMS = MANDATORY_PARAMS + list(DEFAULT_PARAMS.keys()) + OPTIONAL_PARAMS
 
 def load_config(config_file):
     """Load and return the configuration from a YAML file."""
-    config_path = os.path.join("./configs/datasets", f"{config_file}.yaml")
+    config_path = os.path.join("./config/datasets", f"{config_file}.yaml") #changed configs to config
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found: {config_path}")
     with open(config_path, "r") as f:
@@ -42,8 +42,19 @@ def validate_values(config):
         raise ValueError(f"Invalid dataset: {config['dataset']}")
     if not (0 <= config["overlap"] <= 1):
         raise ValueError("Overlap must be between 0 and 1")
-    if "notch_freq" in config and config["notch_freq"] <= 0:
-        raise ValueError("Notch frequency must be positive")
+    
+    # Modified notch frequency validation
+    if "notch_freq" in config:
+        if isinstance(config["notch_freq"], list):
+            # Check each frequency in the list
+            for freq in config["notch_freq"]:
+                if freq <= 0:
+                    raise ValueError(f"Notch frequency {freq} must be positive")
+        else:
+            # Single frequency case
+            if config["notch_freq"] <= 0:
+                raise ValueError("Notch frequency must be positive")
+    
     if "bandpass_freqs" in config:
         if len(config["bandpass_freqs"]) != 2 or config["bandpass_freqs"][0] >= config["bandpass_freqs"][1]:
             raise ValueError("Bandpass frequencies must be two positive values, low < high")

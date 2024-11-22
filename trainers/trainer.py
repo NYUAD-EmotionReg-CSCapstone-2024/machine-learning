@@ -106,6 +106,9 @@ class Trainer(ABC):
         running_loss = 0.0
         with tqdm(total=len(self.train_loader), desc="Training Iterations", leave=False) as pbar:
             for idx, (data, labels) in enumerate(self.train_loader):
+        #  #   debug lines
+        #         print(f"Batch {idx}")
+        #         print(f"Input data shape: {data.shape}")
                 data, labels = data.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
                 outputs = self.model(data)
