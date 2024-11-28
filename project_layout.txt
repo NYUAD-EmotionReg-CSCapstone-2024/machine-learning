@@ -9,11 +9,15 @@ build.py
         └── set_2.yaml
     └── [experiments]
         ├── exp_1.yaml
+        ├── exp_10.yaml
         ├── exp_2.yaml
         ├── exp_3.yaml
         ├── exp_4.yaml
         ├── exp_5.yaml
-        └── exp_6.yaml
+        ├── exp_6.yaml
+        ├── exp_7.yaml
+        ├── exp_8.yaml
+        └── exp_9.yaml
 [data]
     └── [SEED-V]
         ├── [EEG_raw]
@@ -157,6 +161,11 @@ dataset_viewer.ipynb
             ├── checkpoint_95.pth
             └── latest_checkpoint.pth
         ├── metrics.png
+    ├── [exp_exp_10]
+        ├── [checkpoints]
+            ├── checkpoint_10.pth
+            ├── checkpoint_5.pth
+            └── latest_checkpoint.pth
     ├── [exp_exp_2]
         ├── [checkpoints]
             ├── checkpoint_10.pth
@@ -228,16 +237,127 @@ dataset_viewer.ipynb
             ├── checkpoint_40.pth
             ├── checkpoint_5.pth
             └── latest_checkpoint.pth
-    └── [exp_exp_6]
+    ├── [exp_exp_6]
         ├── [checkpoints]
             ├── checkpoint_10.pth
+            ├── checkpoint_100.pth
+            ├── checkpoint_105.pth
+            ├── checkpoint_110.pth
+            ├── checkpoint_115.pth
+            ├── checkpoint_120.pth
+            ├── checkpoint_125.pth
+            ├── checkpoint_130.pth
+            ├── checkpoint_135.pth
+            ├── checkpoint_140.pth
+            ├── checkpoint_145.pth
+            ├── checkpoint_15.pth
+            ├── checkpoint_150.pth
+            ├── checkpoint_155.pth
+            ├── checkpoint_160.pth
+            ├── checkpoint_165.pth
+            ├── checkpoint_170.pth
+            ├── checkpoint_175.pth
+            ├── checkpoint_180.pth
+            ├── checkpoint_185.pth
+            ├── checkpoint_195.pth
+            ├── checkpoint_20.pth
+            ├── checkpoint_200.pth
+            ├── checkpoint_25.pth
+            ├── checkpoint_30.pth
+            ├── checkpoint_35.pth
+            ├── checkpoint_40.pth
+            ├── checkpoint_45.pth
+            ├── checkpoint_5.pth
+            ├── checkpoint_50.pth
+            ├── checkpoint_55.pth
+            ├── checkpoint_60.pth
+            ├── checkpoint_65.pth
+            ├── checkpoint_70.pth
+            ├── checkpoint_75.pth
+            ├── checkpoint_80.pth
+            ├── checkpoint_85.pth
+            ├── checkpoint_90.pth
+            ├── checkpoint_95.pth
+            └── latest_checkpoint.pth
+        ├── metrics.png
+    ├── [exp_exp_7]
+        ├── [checkpoints]
+            ├── checkpoint_10.pth
+            ├── checkpoint_100.pth
+            ├── checkpoint_105.pth
+            ├── checkpoint_115.pth
+            ├── checkpoint_120.pth
+            ├── checkpoint_125.pth
+            ├── checkpoint_130.pth
+            ├── checkpoint_135.pth
             ├── checkpoint_15.pth
             ├── checkpoint_20.pth
             ├── checkpoint_25.pth
             ├── checkpoint_30.pth
-            ├── checkpoint_35.pth
+            ├── checkpoint_40.pth
+            ├── checkpoint_45.pth
             ├── checkpoint_5.pth
+            ├── checkpoint_50.pth
+            ├── checkpoint_55.pth
+            ├── checkpoint_60.pth
+            ├── checkpoint_65.pth
+            ├── checkpoint_95.pth
             └── latest_checkpoint.pth
+        ├── metrics.png
+    ├── [exp_exp_8]
+        ├── [checkpoints]
+            ├── checkpoint_10.pth
+            ├── checkpoint_100.pth
+            ├── checkpoint_115.pth
+            ├── checkpoint_120.pth
+            ├── checkpoint_135.pth
+            ├── checkpoint_140.pth
+            ├── checkpoint_15.pth
+            ├── checkpoint_155.pth
+            ├── checkpoint_160.pth
+            ├── checkpoint_175.pth
+            ├── checkpoint_195.pth
+            ├── checkpoint_20.pth
+            ├── checkpoint_200.pth
+            ├── checkpoint_25.pth
+            ├── checkpoint_30.pth
+            ├── checkpoint_35.pth
+            ├── checkpoint_40.pth
+            ├── checkpoint_5.pth
+            ├── checkpoint_50.pth
+            ├── checkpoint_55.pth
+            ├── checkpoint_60.pth
+            ├── checkpoint_75.pth
+            ├── checkpoint_80.pth
+            ├── checkpoint_90.pth
+            ├── checkpoint_95.pth
+            └── latest_checkpoint.pth
+        ├── metrics.png
+    └── [exp_exp_9]
+        ├── [checkpoints]
+            ├── checkpoint_10.pth
+            ├── checkpoint_110.pth
+            ├── checkpoint_115.pth
+            ├── checkpoint_120.pth
+            ├── checkpoint_135.pth
+            ├── checkpoint_140.pth
+            ├── checkpoint_15.pth
+            ├── checkpoint_150.pth
+            ├── checkpoint_160.pth
+            ├── checkpoint_180.pth
+            ├── checkpoint_20.pth
+            ├── checkpoint_200.pth
+            ├── checkpoint_30.pth
+            ├── checkpoint_35.pth
+            ├── checkpoint_40.pth
+            ├── checkpoint_5.pth
+            ├── checkpoint_50.pth
+            ├── checkpoint_55.pth
+            ├── checkpoint_60.pth
+            ├── checkpoint_75.pth
+            ├── checkpoint_90.pth
+            └── latest_checkpoint.pth
+        ├── metrics.png
 get-pip.py
 hpc_setup.sh
 [models]

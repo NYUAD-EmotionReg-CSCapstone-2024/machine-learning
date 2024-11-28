@@ -63,11 +63,17 @@ class EEGPreprocessor:
 
     def normalize(self, raw_data):
         """
-        Normalize the EEG data using z-score normalization across time for each channel.
+        Normalize the EEG data per participant.
         """
-        raw_data.apply_function(lambda x: (x - np.mean(x)) / np.std(x), picks="eeg", verbose=False)
-        # Z-score normalization for each EEG channel
+        # Apply function to each channel individually
+        raw_data.apply_function(
+            lambda x: (x - np.mean(x)) / np.std(x),
+            picks="eeg",
+            verbose=False
+        )
         return raw_data
+
+
         
     def preprocess(self, raw_data, steps):
         """

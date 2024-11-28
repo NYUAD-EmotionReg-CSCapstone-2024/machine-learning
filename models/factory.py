@@ -1,4 +1,5 @@
 import torch
+from torch.optim import lr_scheduler 
 
 from utils.factory import BaseFactory
 
@@ -31,3 +32,17 @@ class OptimizerFactory(BaseFactory):
         }
     }
     ITEM_KEY = "optimizer"
+
+
+class SchedulerFactory(BaseFactory):
+    REGISTRY = {
+        "cosine_warmup": {
+            "scheduler": lr_scheduler.CosineAnnealingWarmRestarts,
+            "mandatory_params": ["T_0", "eta_min"],
+            "optional_params": ["T_mult"]
+        }
+    }
+    ITEM_KEY = "scheduler"
+
+
+    

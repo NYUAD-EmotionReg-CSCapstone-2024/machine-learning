@@ -6,29 +6,30 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from datasets import DatasetFactory, SplitterFactory
-from models import ModelFactory, OptimizerFactory
-
+from models import ModelFactory, OptimizerFactory, SchedulerFactory  # Added SchedulerFactory
 from trainers import Trainer
 
 loss_fn = nn.CrossEntropyLoss()
 
 def main(args):
     config_path = os.path.join("./config/experiments", f"{args.config}.yaml")
-    print(f"Looking for config file at: {config_path}")  # Debugging line
+    print(f"Looking for config file at: {config_path}")
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found: {config_path}")
-
 
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
     device = torch.device(config["device"])
 
+    # Create dataset
     dataset = DatasetFactory.create(
         config["dataset"]["name"],
         **config["dataset"]["params"],
         load=args.load
     )
+
+    # Create splitter
     splitter = SplitterFactory.create(
         config["splitter"]["name"], 
         dataset=dataset,
@@ -38,21 +39,34 @@ def main(args):
     train_set = splitter.trainset
     test_set = splitter.testset
 
+    # Create data loaders
     batch_size = config["batch_size"]
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
 
+    # Create model
     model = ModelFactory.create(
         config["model"]["name"], 
         **config["model"]["params"]
     ).to(device)
 
+    # Create optimizer
     optimizer = OptimizerFactory.create(
         config["optimizer"]["name"], 
         model.parameters(),
         **config["optimizer"]["params"]
     )
 
+    # Create scheduler
+    scheduler = None
+    if "scheduler" in config:
+        scheduler = SchedulerFactory.create(
+            config["scheduler"]["name"],
+            optimizer,
+            **config["scheduler"]["params"]
+        )
+
+    # Create trainer
     trainer = Trainer(
         train_loader=train_loader,
         val_loader=test_loader,
@@ -63,6 +77,11 @@ def main(args):
         exp_dir=os.path.join(config["exp_dir"], f"exp_{args.config}"),
     )
 
+    # Set scheduler if it exists
+    if scheduler is not None:
+        trainer.set_scheduler(scheduler)
+
+    # Start training
     trainer.train(
         epochs=config["epochs"], 
         eval_every=config["eval_every"], 
@@ -75,5 +94,6 @@ if __name__ == "__main__":
     parser.add_argument("--config", type=str, required=True, help="Path to the configuration file (without .yaml extension)")
     parser.add_argument("--load", action="store_true", help="Load the dataset in memory for faster training")
     parser.add_argument("--resume", action="store_true", help="Resume training from the latest checkpoint")
+    
     args = parser.parse_args()
     main(args)

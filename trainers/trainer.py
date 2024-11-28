@@ -16,6 +16,8 @@ class Trainer(ABC):
         self.model = model
         self.loss_fn = loss_fn
         self.optimizer = optimizer
+   
+        self.scheduler = None
         self.exp_dir = exp_dir
         self.device = device
 
@@ -25,8 +27,14 @@ class Trainer(ABC):
             "best_val_loss": float("inf"),
             "train_loss": [],
             "val_loss": [],
-            "acc": []
+            "acc": [],
+            "learning_rates": []  # new line to track leanring rate
         }
+
+
+    def set_scheduler(self, scheduler):
+        """Add scheduler to trainer after initialization"""
+        self.scheduler = scheduler
 
     def _setup_logger(self, exp_dir, mode="w"):
         """Set up the logger to log training information."""
@@ -100,15 +108,19 @@ class Trainer(ABC):
         acc = correct / total
         val_loss = val_loss / len(self.val_loader)
         return acc, val_loss
+    
 
     def _train_epoch(self):
         """Train the model for one epoch."""
+        self.model.train()
         running_loss = 0.0
+        
+        # Get current learning rate
+        current_lr = self.optimizer.param_groups[0]['lr']
+        self.metrics['learning_rates'].append(current_lr)
+        
         with tqdm(total=len(self.train_loader), desc="Training Iterations", leave=False) as pbar:
             for idx, (data, labels) in enumerate(self.train_loader):
-        #  #   debug lines
-        #         print(f"Batch {idx}")
-        #         print(f"Input data shape: {data.shape}")
                 data, labels = data.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
                 outputs = self.model(data)
@@ -116,9 +128,20 @@ class Trainer(ABC):
                 loss.backward()
                 self.optimizer.step()
                 running_loss += loss.item()
-                pbar.set_postfix({"loss": running_loss / (idx + 1)})
+                pbar.set_postfix({
+                    "loss": running_loss / (idx + 1),
+                    "lr": current_lr
+                })
                 pbar.update()
+
+        # Step the scheduler after each epoch
+        if self.scheduler is not None:
+            self.scheduler.step()
+                
         return running_loss / len(self.train_loader)
+
+
+
 
     def _resume_training(self):
         """Resume training from the last saved checkpoint."""
@@ -149,6 +172,42 @@ class Trainer(ABC):
         return start_epoch
     
     def _plot_metrics(self, eval_every):
+        # Create a figure with 4 subplots
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
+        
+        # Plot training loss
+        ax1.plot(self.metrics["train_loss"], label="Train Loss")
+        ax1.set_title("Training Loss")
+        ax1.set_xlabel("Epoch")
+        ax1.set_ylabel("Loss")
+        ax1.legend()
+
+        # Plot validation loss
+        eval_epochs = list(range(eval_every, len(self.metrics["val_loss"]) * eval_every + 1, eval_every))
+        ax2.plot(eval_epochs, self.metrics["val_loss"], label="Validation Loss", color="orange")
+        ax2.set_title("Validation Loss")
+        ax2.set_xlabel("Epoch")
+        ax2.set_ylabel("Loss")
+        ax2.legend()
+
+        # Plot validation accuracy
+        ax3.plot(eval_epochs, self.metrics["acc"], label="Validation Accuracy", color="green")
+        ax3.set_title("Validation Accuracy")
+        ax3.set_xlabel("Epoch")
+        ax3.set_ylabel("Accuracy")
+        ax3.legend()
+
+        # Plot learning rate
+        ax4.plot(self.metrics["learning_rates"], label="Learning Rate", color="red")
+        ax4.set_title("Learning Rate Schedule")
+        ax4.set_xlabel("Epoch")
+        ax4.set_ylabel("Learning Rate")
+        ax4.set_yscale('log')  # Use log scale for learning rate
+        ax4.legend()
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(self.exp_dir, "metrics.png"))
+        plt.close()
         # plot train_loss, validation_loss, and val_acc
         fig, ax = plt.subplots(1, 3, figsize=(15, 5))
         eval_epochs = list(range(eval_every, len(self.metrics["val_loss"]) * eval_every + 1, eval_every))

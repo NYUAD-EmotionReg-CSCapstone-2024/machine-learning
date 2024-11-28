@@ -5,9 +5,8 @@ dataset:
   name: "seedv"
   params:
     root_dir: ./data/SEED-V/
-    h5file: scratch3.h5
-    participants: [1]
-
+    h5file: scratch6.h5
+    participants: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 splitter:
   name: "random"
   params:
@@ -26,15 +25,14 @@ optimizer:
   params:
     lr: 0.001
 
-# Add this scheduler section
 scheduler:
   name: "cosine_warmup"
   params:
-    T_0: 10
-    T_mult: 2
-    eta_min: 0.000001
+    T_0: 20  # Increased from 10 to give more exploration time
+    T_mult: 1  # Changed from 2 to maintain consistent cycle length
+    eta_min: 0.0005  # Increased minimum LR since we have more data
 
 epochs: 200
-batch_size: 1024
+batch_size: 256
 eval_every: 5
-patience: 25
+patience: 30
