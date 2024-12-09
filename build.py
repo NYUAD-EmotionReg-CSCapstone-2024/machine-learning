@@ -16,7 +16,7 @@ ALL_PARAMS = MANDATORY_PARAMS + list(DEFAULT_PARAMS.keys()) + OPTIONAL_PARAMS
 
 def load_config(config_file):
     """Load and return the configuration from a YAML file."""
-    config_path = os.path.join("./configs/datasets", f"{config_file}.yaml")
+    config_path = os.path.join("./config/builds", f"{config_file}.yaml")
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found: {config_path}")
     with open(config_path, "r") as f:

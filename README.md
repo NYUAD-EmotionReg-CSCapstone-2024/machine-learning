@@ -24,6 +24,11 @@ resample_freq: 200
 normalize: True
 ```
 
+You can then run: 
+```
+python build.py --config {config_file} --overwrite {True/False}
+```
+
 ### To train the model
 
 Create a train config file inside `config/experiments` named `exp_{uniq_num}.yaml` with:
@@ -64,6 +69,11 @@ epochs: 100
 batch_size: 256
 eval_every: 5
 patience: 10
+```
+
+You can then run: 
+```
+python train.py --config {config_file} --load {True/False} --resume {True/False}
 ```
 
 # Training Logs and Checkpoints

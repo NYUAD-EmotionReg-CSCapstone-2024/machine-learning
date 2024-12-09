@@ -69,9 +69,6 @@ class SeedVDataset(Dataset):
             if str(pid) not in self.h5file:
                 raise ValueError(f"Participant {pid} not found in the dataset.")
             for sid in self.sessions:
-                # escape participant 7 session 1 (not working yet, need to fix)
-                if str(pid) == "7" and str(sid) == "1":
-                    continue
                 if str(sid) not in self.h5file[str(pid)]:
                     raise ValueError(f"Session {sid} not found for participant {pid}.")
                 for emotion in self.emotions:
@@ -86,9 +83,6 @@ class SeedVDataset(Dataset):
     def _collect_data_ids(self):
         for pid in self.participants:
             for sid in self.sessions:
-                # escape participant 7 session 1 (not working yet, need to fix)
-                if str(pid) == "7" and str(sid) == "1":
-                    continue
                 for emotion in self.emotions:
                     data_ids = list(self.h5file[str(pid)][str(sid)][str(emotion)].keys())
                     self.data_ids.extend(data_ids)
