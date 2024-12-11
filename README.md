@@ -58,6 +58,14 @@ model:
     input_window_seconds: 4
     sfreq: 200
 
+# Splitting configuration 
+splitter:
+  name: lnso
+  dataset: seedv4s0o.h5
+  params:
+    num_participants: 15
+    shuffle: True 
+    
 # Optimizer configuration
 optimizer:
   name: "adam"

@@ -72,9 +72,8 @@ class SeedVDataset(Dataset):
                 if str(sid) not in self.h5file[str(pid)]:
                     raise ValueError(f"Session {sid} not found for participant {pid}.")
                 for emotion in self.emotions:
-                    emotion = str(emotion)
-                    if emotion not in self.h5file[str(pid)][str(sid)]:
-                        raise ValueError(f"Emotion {emotion} not found for participant {pid} in session {sid}.")
+                    if str(emotion) not in self.h5file[str(pid)][str(sid)]:
+                        continue
         for channel in self.channels:
             if channel not in channel_mappings:
                 raise ValueError(f"Channel {channel} not found in the channel mappings.")
@@ -84,6 +83,9 @@ class SeedVDataset(Dataset):
         for pid in self.participants:
             for sid in self.sessions:
                 for emotion in self.emotions:
+                    emotion = str(emotion)  # Convert emotion to string
+                    if emotion not in self.h5file[str(pid)][str(sid)]:
+                        continue
                     data_ids = list(self.h5file[str(pid)][str(sid)][str(emotion)].keys())
                     self.data_ids.extend(data_ids)
         np.random.shuffle(self.data_ids)

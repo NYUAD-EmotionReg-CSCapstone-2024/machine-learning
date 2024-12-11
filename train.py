@@ -10,6 +10,9 @@ from models import ModelFactory, OptimizerFactory
 
 from trainers import Trainer
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="torch.nn.modules.conv")
+
 loss_fn = nn.CrossEntropyLoss()
 
 def main(args):

@@ -33,7 +33,7 @@ class Trainer(ABC):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
         log_file = os.path.join(exp_dir, "train.log")
-        file_handler = logging.FileHandler(log_file, mode=mode)
+        file_handler = logging.FileHandler(log_file, mode=mode, encoding="utf-8")
         formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
