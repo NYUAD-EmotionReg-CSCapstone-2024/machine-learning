@@ -3,7 +3,7 @@ import mne
 import warnings
 
 import h5py as h5
-# import pandas as pd
+import pandas as pd
 from tqdm import tqdm
 
 from ..EEGPreprocessor import EEGPreprocessor
@@ -13,7 +13,7 @@ from .session_labels import _original_session_labels as session_labels
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 _channels_to_drop = ['M1', 'M2', 'VEO', 'HEO']
-# _scores_file_path = os.path.join(os.path.dirname(__file__), "scores.csv")
+_scores_file_path = os.path.join(os.path.dirname(__file__), "scores.csv")
 
 class SeedVBuilder:
     '''
@@ -38,12 +38,12 @@ class SeedVBuilder:
             if file.endswith(".cnt") or file.endswith(".edf")
         ]
 
-        # if not os.path.exists(_scores_file_path):
-        #     raise FileNotFoundError(f"Scores file not found at {_scores_file_path}")
-        # try:
-        #     self.scores_df = pd.read_csv(_scores_file_path)
-        # except Exception as e:
-        #     raise RuntimeError(f"Error loading scores file: {e}")
+        if not os.path.exists(_scores_file_path):
+            raise FileNotFoundError(f"Scores file not found at {_scores_file_path}")
+        try:
+            self.scores_df = pd.read_csv(_scores_file_path)
+        except Exception as e:
+            raise RuntimeError(f"Error loading scores file: {e}")
 
     def build(
             self, 
@@ -109,16 +109,15 @@ class SeedVBuilder:
 
                 session_info = session_labels[int(sid)] # ground truth labels for the sessions
                 n_samples = int(chunk_duration * s_freq)
-                # for mid, (start_sec, end_sec, label) in enumerate(zip(session_info["start"], session_info["end"], session_info["labels"])):
-                for start_sec, end_sec, label in zip(session_info["start"], session_info["end"], session_info["labels"]):
+                for mid, (start_sec, end_sec, label) in enumerate(zip(session_info["start"], session_info["end"], session_info["labels"])):
                     # Check if this movie is valid for processing based on scores.csv
-                    # score_row = self.scores_df[
-                    #     (self.scores_df["pid"] == int(pid)) & 
-                    #     (self.scores_df["sid"] == int(sid)) & 
-                    #     (self.scores_df["mid"] == mid + 1)
-                    # ]
-                    # if score_row.empty or score_row.iloc[0]["binary"] == 0:
-                    #     continue  # Skip this movie if binary flag is 0
+                    score_row = self.scores_df[
+                        (self.scores_df["pid"] == int(pid)) & 
+                        (self.scores_df["sid"] == int(sid)) & 
+                        (self.scores_df["mid"] == mid + 1)
+                    ]
+                    if score_row.empty or score_row.iloc[0]["binary"] == 0:
+                        continue  # Skip this movie if binary flag is 0
                     
                     start_idx = int(start_sec * s_freq)
                     end_idx = int(end_sec * s_freq)
