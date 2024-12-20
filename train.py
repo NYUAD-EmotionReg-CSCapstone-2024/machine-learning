@@ -61,7 +61,7 @@ def main(args):
         loss_fn=loss_fn,
         optimizer=optimizer,
         device=device,
-        exp_dir=os.path.join(config["exp_dir"], f"exp_{args.config}"),
+        exp_dir=os.path.join(config["exp_dir"], f"{args.config}"),
     )
 
     trainer.train(

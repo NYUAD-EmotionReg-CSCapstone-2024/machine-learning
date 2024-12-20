@@ -29,12 +29,6 @@ class KFoldSplitter(DatasetSplitter):
     def set_fold(self, fold_idx: int) -> None:
         """
         Sets the current fold index, defining which fold will be used as the test set.
-        
-        Args:
-            fold_idx (int): The index of the fold to be used as the test set.
-        
-        Raises:
-            ValueError: If fold_idx is not within the valid range [0, k-1].
         """
         if fold_idx < 0 or fold_idx >= self.k:
             raise ValueError(f"Invalid fold index: {fold_idx}. Must be between 0 and {self.k - 1}.")
