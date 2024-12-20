@@ -5,7 +5,7 @@ from .DatasetSplitter import DatasetSplitter
 
 class LNSOSplitter(DatasetSplitter):
     """
-    Leave-N Participants Out Splitter (LNSO).
+    Leave-N Participants Out Splitter (LNSO) with overlap.
     
     This splitter splits the dataset by leaving out a certain number of participants for 
     testing, while using the remaining participants for training.
@@ -16,15 +16,14 @@ class LNSOSplitter(DatasetSplitter):
                                                    Can be an integer specifying how many participants to leave out, 
                                                    or a list of participant IDs.
         shuffle (bool): Whether to shuffle the dataset indices before splitting. Defaults to True.
-        
-    Raises:
-        ValueError: If the number of participants specified is invalid (less than 1 or more than available).
+        overlap_ratio (float): The ratio of overlap between consecutive chunks.
     """
-    def __init__(self, dataset: Dataset, num_participants: Union[int, List[int]], shuffle: bool = True) -> None:
+    def __init__(self, dataset: Dataset, num_participants: Union[int, List[int]], shuffle: bool = True, overlap_ratio: float = 0.5) -> None:
         super().__init__(dataset, shuffle)
-
+        
         self.participants: List[str] = dataset.participants
         self.data_ids: List[str] = dataset.data_ids
+        self.overlap_ratio: float = overlap_ratio  # New parameter for overlap
 
         # Determine the number of participants to leave out
         if isinstance(num_participants, List):
@@ -33,7 +32,7 @@ class LNSOSplitter(DatasetSplitter):
                 if pid not in self.participants:
                     raise ValueError(f"Invalid participant ID: {pid}. Participant not found in the dataset.")
             self.test_participants: Set[str] = set(num_participants)
-            self.train_subjects: Set[str] = set(self.participants) - self.test_participants
+            self.train_participants: Set[str] = set(self.participants) - self.test_participants
         else:
             if num_participants < 1 or num_participants >= len(self.participants):
                 raise ValueError(f"Invalid number of participants: {num_participants}. \
@@ -56,8 +55,8 @@ class LNSOSplitter(DatasetSplitter):
 
     def _split(self) -> None:
         """Splits dataset into training and testing sets based on participants."""
-        self.train_indices: List[int] = []
-        self.test_indices: List[int] = []
+        train_base = []
+        test_base = []
 
         for idx, data_id in enumerate(self.data_ids):
             # Extract participant ID from the data_id
@@ -65,6 +64,11 @@ class LNSOSplitter(DatasetSplitter):
 
             # Assign to train or test set based on participant ID
             if int(pid) in self.train_participants:
-                self.train_indices.append(idx)
+                train_base.append(self.dataset.segments[idx])
             else:
-                self.test_indices.append(idx)
+                test_base.append(self.dataset.segments[idx])
+
+        # Apply overlap to the base segments for training and testing
+        self.train_indices = self.generate_overlapping_chunks(train_base, self.overlap_ratio)
+        self.test_indices = self.generate_overlapping_chunks(test_base, self.overlap_ratio)
+8

@@ -1,7 +1,7 @@
 from utils.factory import BaseFactory
 
 from .seedv import SeedVDataset
-from .splitters import RandomSplitter, LNSOSplitter
+from .splitters import RandomSplitter, LNSOSplitter, KFoldSplitter
 
 class DatasetFactory(BaseFactory):
     REGISTRY = {
@@ -18,12 +18,17 @@ class SplitterFactory(BaseFactory):
         "random": {
             "splitter": RandomSplitter,
             "mandatory_params": ["dataset"],
-            "optional_params": ["train_ratio", "shuffle"]
+            "optional_params": ["train_ratio", "shuffle", "overlap_ratio"]  
         },
         "lnso": {
             "splitter": LNSOSplitter,
             "mandatory_params": ["dataset"],
-            "optional_params": ["num_participants", "shuffle"]
+            "optional_params": ["num_participants", "shuffle", "overlap_ratio"]  
+        },
+        "kfold": {
+            "splitter": KFoldSplitter,
+            "mandatory_params": ["dataset", "k"],
+            "optional_params": ["shuffle", "overlap_ratio"]  
         }
     }
     ITEM_KEY = "splitter"

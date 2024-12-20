@@ -50,7 +50,6 @@ class SeedVBuilder:
             outfile, 
             overwrite,
             chunk_duration, 
-            overlap,
             preprocessors
         ):
         '''
@@ -63,8 +62,6 @@ class SeedVBuilder:
             Duration of each chunk in seconds
         resample_freq: int
             Frequency to resample the EEG data to
-        overlap: int
-            Overlap between consecutive chunks in percent (0-1)
         preprocessors: list
             List of preprocessors to apply to the raw EEG data
             notch, bandpass, resample, eog_removal, normalize
@@ -122,18 +119,24 @@ class SeedVBuilder:
                     start_idx = int(start_sec * s_freq)
                     end_idx = int(end_sec * s_freq)
 
-                    overlap_samples = int(n_samples * overlap)
-
-                    # iterate through chunks
-                    for i in range(start_idx, end_idx, n_samples - overlap_samples):
+                    # iterate through chunks (NO OVERLAP HERE)
+                    for i in range(start_idx, end_idx, n_samples):
                         chunk = raw_data[:, i:i+n_samples]
-                        if chunk.shape[1] < n_samples: # ignore the last chunk if it's too short
+                        if chunk.shape[1] < n_samples:  # ignore the last chunk if it's too short
                             continue
+
+                        # Add metadata for start and end indices
+                        chunk_meta = {"start": i, "end": i + n_samples}
+
+                        # Create hierarchical groups in the HDF5 file
                         p_group = f.require_group(str(pid))
                         s_group = p_group.require_group(str(sid))
                         e_group = s_group.require_group(str(label))
 
+                        # Save chunk and metadata
                         chunk_id = f"{pid}_{sid}_{label}_{i}"
-                        e_group.create_dataset(chunk_id, data=chunk, chunks=True, compression="gzip")
+                        dataset = e_group.create_dataset(chunk_id, data=chunk, chunks=True, compression="gzip")
+                        dataset.attrs.update(chunk_meta)
+
 
         print(f"Dataset with frequency {s_freq} Hz and chunk duration {chunk_duration} sec saved to {outfile_path}.")

@@ -13,7 +13,6 @@ root_dir: "/data/SEED-V"
 dataset: "seedv"
 outfile: "seedv4s0o"
 chunk_duration: 4
-overlap: 0
 
 # Optional preprocessing
 notch_freq: 50
@@ -26,7 +25,12 @@ normalize: True
 
 You can then run: 
 ```
-python build.py --config {config_file} --overwrite {True/False}
+python build.py --config {config_file_name} --overwrite {True/False}
+```
+
+For example: 
+```
+python build.py --config set_00 --overwrite
 ```
 
 ### To train the model
@@ -60,10 +64,11 @@ model:
 
 # Splitting configuration 
 splitter:
-  name: lnso
+  name: random
   dataset: seedv4s0o.h5
   params:
-    num_participants: 15
+    train_ratio: 0.8
+    overlap_ratio: 0.5
     shuffle: True 
     
 # Optimizer configuration
@@ -81,7 +86,12 @@ patience: 10
 
 You can then run: 
 ```
-python train.py --config {config_file} --load {True/False} --resume {True/False}
+python train.py --config {config_file_name} --load {True/False} --resume {True/False}
+```
+
+For example: 
+```
+python train.py --config exp_00 --load --resume
 ```
 
 # Training Logs and Checkpoints

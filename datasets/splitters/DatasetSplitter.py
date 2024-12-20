@@ -50,3 +50,33 @@ class DatasetSplitter(ABC):
         if self.test_indices is None:
             raise ValueError("Please call the split() method first.")
         return Subset(self.dataset, self.test_indices)
+    
+    def generate_overlapping_chunks(self, base_segments, overlap_ratio=0.5):
+        """
+        Generate overlapping chunks for a list of base segments.
+        Args:
+            base_segments (list): List of segment metadata dictionaries.
+            overlap_ratio (float): The ratio of overlap between consecutive chunks.
+
+        Returns:
+            list: Overlapping segments with updated start/end indices.
+        """
+
+        if not (0 <= overlap_ratio <= 1):
+            raise ValueError("Overlap must be between 0 and 1")
+
+        overlapping_chunks = []
+        for segment in base_segments:
+            start = segment["start"]
+            end = segment["end"]
+            segment_length = end - start
+            overlap_length = int(segment_length * overlap_ratio)
+
+            # Generate overlapping segments
+            for i in range(start, end - segment_length + 1, segment_length - overlap_length):
+                overlapped_segment = segment.copy()
+                overlapped_segment["start"] = i
+                overlapped_segment["end"] = i + segment_length
+                overlapping_chunks.append(overlapped_segment)
+
+        return overlapping_chunks

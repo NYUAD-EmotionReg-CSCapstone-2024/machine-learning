@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="torch.nn.modules
 loss_fn = nn.CrossEntropyLoss()
 
 def main(args):
-    config_path = os.path.join("./config/experiments", f"exp_{args.config}.yaml")
+    config_path = os.path.join("./config/experiments", f"{args.config}.yaml")
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found: {args.config}")
 

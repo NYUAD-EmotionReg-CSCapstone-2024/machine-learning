@@ -44,6 +44,7 @@ class SeedVDataset(Dataset):
         self.h5file = h5.File(os.path.join(root_dir, h5file), "r")
         self.transform = transform
         self.data_ids = []
+        self.segments = []  # Store metadata for each segment
 
         self.participants = participants
         self.sessions = sessions
@@ -80,14 +81,26 @@ class SeedVDataset(Dataset):
 
 
     def _collect_data_ids(self):
+        """Collect metadata for non-overlapping segments."""
         for pid in self.participants:
             for sid in self.sessions:
                 for emotion in self.emotions:
-                    emotion = str(emotion)  # Convert emotion to string
                     if emotion not in self.h5file[str(pid)][str(sid)]:
                         continue
+                    
                     data_ids = list(self.h5file[str(pid)][str(sid)][str(emotion)].keys())
                     self.data_ids.extend(data_ids)
+
+                    for data_id in self.h5file[str(pid)][str(sid)][str(emotion)]:
+                        data_attrs = self.h5file[str(pid)][str(sid)][str(emotion)][data_id].attrs
+                        self.segments.append({
+                            "pid": pid,
+                            "sid": sid,
+                            "emotion": emotion,
+                            "data_id": data_id,
+                            "start": data_attrs["start"],
+                            "end": data_attrs["end"],
+                        })
         np.random.shuffle(self.data_ids)
 
     def _load_in_memory(self):
