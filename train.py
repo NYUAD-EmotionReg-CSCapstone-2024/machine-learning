@@ -6,7 +6,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from datasets import DatasetFactory, SplitterFactory
-from models import ModelFactory, OptimizerFactory
+from models import ModelFactory, OptimizerFactory, SchedulerFactory
 
 from trainers import Trainer
 
@@ -54,6 +54,15 @@ def main(args):
         **config["optimizer"]["params"]
     )
 
+    # Create scheduler
+    scheduler = None
+    if "scheduler" in config:
+        scheduler = SchedulerFactory.create(
+            config["scheduler"]["name"],
+            optimizer,
+            **config["scheduler"]["params"]
+        )
+
     trainer = Trainer(
         train_loader=train_loader,
         val_loader=test_loader,
@@ -63,6 +72,10 @@ def main(args):
         device=device,
         exp_dir=os.path.join(config["exp_dir"], f"{args.config}"),
     )
+
+    # Set scheduler if it exists
+    if scheduler is not None:
+        trainer.set_scheduler(scheduler)
 
     trainer.train(
         epochs=config["epochs"], 

@@ -77,6 +77,14 @@ optimizer:
   params:
     lr: 0.0005
 
+  # Scheduler configuration
+scheduler:
+  name: "cosine_warmup"
+  params:
+    T_0: 10           
+    T_mult: 2         
+    eta_min: 0.0001  
+
 # Training configuration
 epochs: 100
 batch_size: 256
