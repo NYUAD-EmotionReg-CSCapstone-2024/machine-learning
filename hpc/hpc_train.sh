@@ -5,13 +5,13 @@
 #SBATCH --gres=gpu:a100:1
 #SBATCH -c 4
 #SBATCH -N 1
-#SBATCH --mem=128G
+#SBATCH --mem=64G
 #SBATCH -t 4-00:00:00
 #SBATCH --output=/scratch/ap7146/machine-learning/logs/train_%A_%a.out   
 #SBATCH --error=/scratch/ap7146/machine-learning/logs/train_%A_%a.err    
 #SBATCH --mail-type=END,FAIL,TIME_LIMIT
 #SBATCH --mail-user=ap7146@nyu.edu
-#SBATCH --array=0
+#SBATCH --array=0-2
 
 # Initialize the modules system
 source /etc/profile.d/modules.sh
@@ -36,7 +36,7 @@ print('GPU:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N
 "
 
 # Array of configuration file names
-config_files=("11")
+config_files=("ERTNET_rand" "ERTNET_LNSO" "ERTNET_kFold")
 
 # Get the config file corresponding to the current task ID
 config_file=${config_files[$SLURM_ARRAY_TASK_ID]}

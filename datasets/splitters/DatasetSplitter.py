@@ -75,7 +75,7 @@ class DatasetSplitter(ABC):
             overlap_length = int(segment_length * overlap_ratio)
 
             # Generate overlapping segments
-            for i in range(start, end - segment_length + 1, segment_length - overlap_length):
+            for i in range(start, end - segment_length + 1, max(segment_length - overlap_length, 1)):
                 overlapped_segment = segment.copy()
                 overlapped_segment["start"] = i
                 overlapped_segment["end"] = i + segment_length

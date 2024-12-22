@@ -14,7 +14,7 @@ class ModelFactory(BaseFactory):
         },
         "ertnet": {
             "model": ERTNet,
-            "mandatory_params": [],
+            "mandatory_params": ["n_channels", "kernLength", "F1", "F2", "D", "heads", "dropoutRate"],
         }
     }
     ITEM_KEY = "model"

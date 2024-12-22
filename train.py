@@ -4,16 +4,56 @@ import argparse
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-
 from datasets import DatasetFactory, SplitterFactory
 from models import ModelFactory, OptimizerFactory, SchedulerFactory
-
 from trainers import Trainer
-
 import warnings
+
 warnings.filterwarnings("ignore", category=UserWarning, module="torch.nn.modules.conv")
 
 loss_fn = nn.CrossEntropyLoss()
+
+def create_trainer(config, splitter, device, fold_idx=None):
+    """Creates and returns a trainer for a given dataset split and configuration."""
+    if fold_idx is not None:
+        splitter.set_fold(fold_idx)
+
+    train_loader = DataLoader(splitter.trainset, batch_size=config["batch_size"], shuffle=True)
+    test_loader = DataLoader(splitter.testset, batch_size=config["batch_size"], shuffle=False)
+
+    model = ModelFactory.create(
+        config["model"]["name"], 
+        **config["model"]["params"]
+    ).to(device)
+
+    optimizer = OptimizerFactory.create(
+        config["optimizer"]["name"], 
+        model.parameters(), 
+        **config["optimizer"]["params"]
+    )
+
+    scheduler = SchedulerFactory.create(
+        config["scheduler"]["name"], 
+        optimizer, 
+        **config["scheduler"]["params"]
+    ) if "scheduler" in config else None
+
+    exp_dir = os.path.join(config["exp_dir"], f"{args.config}_fold{fold_idx}" if fold_idx is not None else args.config)
+
+    trainer = Trainer(
+        train_loader=train_loader,
+        val_loader=test_loader,
+        model=model,
+        loss_fn=loss_fn,
+        optimizer=optimizer,
+        device=device,
+        exp_dir=exp_dir,
+    )
+
+    if scheduler:
+        trainer.set_scheduler(scheduler)
+
+    return trainer
 
 def main(args):
     config_path = os.path.join("./config/experiments", f"{args.config}.yaml")
@@ -24,65 +64,50 @@ def main(args):
         config = yaml.safe_load(f)
 
     device = torch.device(config["device"])
-
+    
     dataset = DatasetFactory.create(
-        config["dataset"]["name"],
-        **config["dataset"]["params"],
+        config["dataset"]["name"], 
+        **config["dataset"]["params"], 
         load=args.load
     )
+    
     splitter = SplitterFactory.create(
         config["splitter"]["name"], 
-        dataset=dataset,
+        dataset=dataset, 
         **config["splitter"]["params"]
     )
 
-    train_set = splitter.trainset
-    test_set = splitter.testset
+    # Handle K-Fold Cross-Validation
+    if config["splitter"]["name"] == "kfold":
+        num_folds = config["splitter"]["params"]["k"]
+        fold_metrics = []
 
-    batch_size = config["batch_size"]
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
+        for fold_idx in range(num_folds):
+            print(f"\nStarting Fold {fold_idx + 1}/{num_folds}")
+            trainer = create_trainer(config, splitter, device, fold_idx)
+            
+            trainer.train(
+                epochs=config["epochs"], 
+                eval_every=config["eval_every"], 
+                patience=config["patience"], 
+                resume=args.resume
+            )
+            
+            fold_metrics.append(trainer.metrics)
 
-    model = ModelFactory.create(
-        config["model"]["name"], 
-        **config["model"]["params"]
-    ).to(device)
-
-    optimizer = OptimizerFactory.create(
-        config["optimizer"]["name"], 
-        model.parameters(),
-        **config["optimizer"]["params"]
-    )
-
-    # Create scheduler
-    scheduler = None
-    if "scheduler" in config:
-        scheduler = SchedulerFactory.create(
-            config["scheduler"]["name"],
-            optimizer,
-            **config["scheduler"]["params"]
+        avg_val_loss = sum([m["best_val_loss"] for m in fold_metrics]) / num_folds
+        print(f"\nK-Fold Cross-Validation Completed\nAverage Validation Loss: {avg_val_loss:.4f}")
+   
+    else:
+        # Single train-test split
+        trainer = create_trainer(config, splitter, device)
+        
+        trainer.train(
+            epochs=config["epochs"],
+            eval_every=config["eval_every"], 
+            patience=config["patience"], 
+            resume=args.resume
         )
-
-    trainer = Trainer(
-        train_loader=train_loader,
-        val_loader=test_loader,
-        model=model,
-        loss_fn=loss_fn,
-        optimizer=optimizer,
-        device=device,
-        exp_dir=os.path.join(config["exp_dir"], f"{args.config}"),
-    )
-
-    # Set scheduler if it exists
-    if scheduler is not None:
-        trainer.set_scheduler(scheduler)
-
-    trainer.train(
-        epochs=config["epochs"], 
-        eval_every=config["eval_every"], 
-        patience=config["patience"],
-        resume=args.resume
-    )
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a model on the SEED-V dataset")

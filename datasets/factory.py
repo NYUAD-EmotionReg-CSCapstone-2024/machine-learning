@@ -22,8 +22,8 @@ class SplitterFactory(BaseFactory):
         },
         "lnso": {
             "splitter": LNSOSplitter,
-            "mandatory_params": ["dataset"],
-            "optional_params": ["num_participants", "shuffle", "overlap_ratio"]  
+            "mandatory_params": ["dataset", "num_participants"],
+            "optional_params": ["shuffle", "overlap_ratio"]  
         },
         "kfold": {
             "splitter": KFoldSplitter,

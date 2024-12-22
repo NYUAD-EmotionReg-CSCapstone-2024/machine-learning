@@ -23,7 +23,7 @@ class LNSOSplitter(DatasetSplitter):
         
         self.participants: List[str] = dataset.participants
         self.data_ids: List[str] = dataset.data_ids
-        self.overlap_ratio: float = overlap_ratio  # New parameter for overlap
+        self.overlap_ratio: float = overlap_ratio  
 
         # Determine the number of participants to leave out
         if isinstance(num_participants, List):

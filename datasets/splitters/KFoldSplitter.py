@@ -19,7 +19,7 @@ class KFoldSplitter(DatasetSplitter):
     def __init__(self, dataset, k: int, shuffle: bool = True, overlap_ratio: float = 0.5) -> None:
         super().__init__(dataset, shuffle)
         self.k: int = k
-        self.overlap_ratio: float = overlap_ratio  # New parameter for overlap
+        self.overlap_ratio: float = overlap_ratio  
 
         if self.shuffle:
             self._shuffle()

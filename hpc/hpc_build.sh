@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=build_datasets       # Job name
-#SBATCH --array=0-10                    # Array range (11 tasks: 0 to 10)
+#SBATCH --array=0                    # Array range (11 tasks: 0 to 10)
 #SBATCH --cpus-per-task=1               # Number of CPU cores per task
 #SBATCH --mem=64G                        # Memory per task
 #SBATCH --time=2-00:00:00               # Time limit hrs:min:sec
@@ -24,7 +24,7 @@ source /scratch/ap7146/machine-learning/venv/bin/activate
 cd /scratch/ap7146/machine-learning/
 
 # Array of configuration file names
-config_files=("set_00" "set_01" "set_02" "set_03" "set_04" "set_05" "set_06" "set_07" "set_08" "set_09" "set_10")
+config_files=("seedv12wnd")
 
 # Get the config file corresponding to the current task ID
 config_file=${config_files[$SLURM_ARRAY_TASK_ID]}
