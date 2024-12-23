@@ -35,6 +35,11 @@ class Trainer(ABC):
     def _setup_logger(self, exp_dir, mode="w"):
         """Set up the logger to log training information."""
         self.logger = logging.getLogger(__name__)
+
+        # Remove any previous existing handlers
+        if self.logger.hasHandlers():
+            self.logger.handlers.clear()
+
         self.logger.setLevel(logging.INFO)
         log_file = os.path.join(exp_dir, "train.log")
         file_handler = logging.FileHandler(log_file, mode=mode, encoding="utf-8")

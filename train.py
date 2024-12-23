@@ -6,6 +6,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from datasets import DatasetFactory, SplitterFactory
 from models import ModelFactory, OptimizerFactory, SchedulerFactory
+from multiprocessing import Process, Manager
 from trainers import Trainer
 import warnings
 
@@ -55,6 +56,21 @@ def create_trainer(config, splitter, device, fold_idx=None):
 
     return trainer
 
+def train_fold(fold_idx, config, splitter, device, results, args):
+    """Function to train a single fold."""
+    print(f"\nStarting Fold {fold_idx + 1}/{config['splitter']['params']['k']}")
+    trainer = create_trainer(config, splitter, device, fold_idx)
+    
+    trainer.train(
+        epochs=config["epochs"], 
+        eval_every=config["eval_every"], 
+        patience=config["patience"], 
+        resume=args.resume
+    )
+    
+    # Store metrics for this fold
+    results[fold_idx] = trainer.metrics
+
 def main(args):
     config_path = os.path.join("./config/experiments", f"{args.config}.yaml")
     if not os.path.exists(config_path):
@@ -80,26 +96,28 @@ def main(args):
     # Handle K-Fold Cross-Validation
     if config["splitter"]["name"] == "kfold":
         num_folds = config["splitter"]["params"]["k"]
-        fold_metrics = []
+        
+        # Shared manager for storing results from each fold
+        with Manager() as manager:
+            results = manager.dict()
+            processes = []
 
-        for fold_idx in range(num_folds):
-            print(f"\nStarting Fold {fold_idx + 1}/{num_folds}")
-            trainer = create_trainer(config, splitter, device, fold_idx)
-            
-            trainer.train(
-                epochs=config["epochs"], 
-                eval_every=config["eval_every"], 
-                patience=config["patience"], 
-                resume=args.resume
-            )
-            
-            fold_metrics.append(trainer.metrics)
+            # Parallel training for each fold idx
+            for fold_idx in range(num_folds):
+                p = Process(target=train_fold, args=(fold_idx, config, splitter, device, results, args))
+                p.start()
+                processes.append(p)
 
-        avg_val_loss = sum([m["best_val_loss"] for m in fold_metrics]) / num_folds
-        print(f"\nK-Fold Cross-Validation Completed\nAverage Validation Loss: {avg_val_loss:.4f}")
-   
+            for p in processes:
+                p.join()
+
+            # Aggregate results
+            fold_metrics = [results[fold_idx] for fold_idx in range(num_folds)]
+            avg_val_loss = sum([m["best_val_loss"] for m in fold_metrics]) / num_folds
+            print(f"\nK-Fold Cross-Validation Completed\nAverage Validation Loss: {avg_val_loss:.4f}")
+    
+   # Other splitters such as Random and LNSO
     else:
-        # Single train-test split
         trainer = create_trainer(config, splitter, device)
         
         trainer.train(
