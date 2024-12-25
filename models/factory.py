@@ -3,8 +3,9 @@ from torch.optim import lr_scheduler
 
 from utils.factory import BaseFactory
 
-from .atcnet import ATCNet
+from .ATCNet import ATCNet
 from .ERTNet import ERTNet
+from .ConvTrans import ConvTransformer
 
 class ModelFactory(BaseFactory):
     REGISTRY = {
@@ -15,6 +16,10 @@ class ModelFactory(BaseFactory):
         "ertnet": {
             "model": ERTNet,
             "mandatory_params": ["n_channels", "kernLength", "F1", "F2", "D", "heads", "dropoutRate"],
+        },
+        "conv_transformer": {
+            "model": ConvTransformer,
+            "mandatory_params": ["n_classes", "n_channels", "n_heads", "n_layers"],
         }
     }
     ITEM_KEY = "model"

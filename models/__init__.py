@@ -1,6 +1,6 @@
-from .atcnet import ATCNet
+from .ATCNet import ATCNet
 from .ERTNet import ERTNet
-from .conv_transformer import ConvTransformer
+from .ConvTrans import ConvTransformer
 from .factory import ModelFactory, OptimizerFactory, SchedulerFactory
 
 __all__ = [

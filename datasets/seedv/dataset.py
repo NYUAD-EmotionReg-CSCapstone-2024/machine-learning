@@ -82,6 +82,9 @@ class SeedVDataset(Dataset):
 
     def _collect_data_ids(self):
         """Collect metadata for non-overlapping segments."""
+        temp_data_ids = []
+        temp_segments = []
+
         for pid in self.participants:
             for sid in self.sessions:
                 for emotion in self.emotions:
@@ -93,7 +96,10 @@ class SeedVDataset(Dataset):
 
                     for data_id in self.h5file[str(pid)][str(sid)][str(emotion)]:
                         data_attrs = self.h5file[str(pid)][str(sid)][str(emotion)][data_id].attrs
-                        self.segments.append({
+                        
+                        # Append to temporary segments and dataids
+                        temp_data_ids.append(data_id)
+                        temp_segments.append({
                             "pid": pid,
                             "sid": sid,
                             "emotion": emotion,
@@ -101,7 +107,10 @@ class SeedVDataset(Dataset):
                             "start": data_attrs["start"],
                             "end": data_attrs["end"],
                         })
-        np.random.shuffle(self.data_ids)
+        # Shuffle data IDs and segments together to maintain alignment
+        combined = list(zip(temp_data_ids, temp_segments))
+        np.random.shuffle(combined)
+        self.data_ids, self.segments = zip(*combined)
 
     def _load_in_memory(self):
         self.data = []

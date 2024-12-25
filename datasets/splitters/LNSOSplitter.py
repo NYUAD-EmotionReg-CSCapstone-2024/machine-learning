@@ -1,4 +1,3 @@
-import numpy as np
 from typing import List, Union, Set
 from torch.utils.data.dataset import Dataset
 from .DatasetSplitter import DatasetSplitter
@@ -18,8 +17,8 @@ class LNSOSplitter(DatasetSplitter):
         shuffle (bool): Whether to shuffle the dataset indices before splitting. Defaults to True.
         overlap_ratio (float): The ratio of overlap between consecutive chunks.
     """
-    def __init__(self, dataset: Dataset, num_participants: Union[int, List[int]], shuffle: bool = True, overlap_ratio: float = 0.5) -> None:
-        super().__init__(dataset, shuffle)
+    def __init__(self, dataset: Dataset, num_participants: Union[int, List[int]], overlap_ratio: float = 0.5) -> None:
+        super().__init__(dataset)
         
         self.participants: List[str] = dataset.participants
         self.data_ids: List[str] = dataset.data_ids
@@ -41,17 +40,8 @@ class LNSOSplitter(DatasetSplitter):
             self.test_participants: Set[str] = set(self.participants[:self.num_participants])
             self.train_participants: Set[str] = set(self.participants[self.num_participants:])
         
-        # Shuffle if needed
-        if shuffle:
-            self._shuffle()
-
         # Split the data based on the participants
         self._split()
-
-    def _shuffle(self) -> None:
-        """Shuffles the dataset's indices and participants in place."""
-        np.random.shuffle(self.participants)
-        self.indices = np.random.permutation(len(self.data_ids))
 
     def _split(self) -> None:
         """Splits dataset into training and testing sets based on participants."""
@@ -63,7 +53,7 @@ class LNSOSplitter(DatasetSplitter):
             pid = data_id.split("_")[0]
 
             # Assign to train or test set based on participant ID
-            if int(pid) in self.train_participants:
+            if int(pid) in self.train_participants or pid in self.train_participants:
                 train_base.append(self.dataset.segments[idx])
             else:
                 test_base.append(self.dataset.segments[idx])
@@ -71,4 +61,3 @@ class LNSOSplitter(DatasetSplitter):
         # Apply overlap to the base segments for training and testing
         self.train_indices = self.generate_overlapping_chunks(train_base, self.overlap_ratio)
         self.test_indices = self.generate_overlapping_chunks(test_base, self.overlap_ratio)
-8
