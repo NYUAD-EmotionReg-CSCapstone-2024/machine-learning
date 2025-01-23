@@ -1,0 +1,11 @@
+bandpass_freqs:
+- 0.5
+- 70
+chunk_duration: 12
+dataset: seedv
+normalize: true
+notch_freq: 50
+outfile: scratch3_chunk_12
+overlap: 0.5
+resample_freq: 200
+root_dir: ./data/SEED-V

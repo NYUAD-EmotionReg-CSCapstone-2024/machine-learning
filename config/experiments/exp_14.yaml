@@ -1,0 +1,41 @@
+exp_dir: "./experiments"
+device: "cuda:0"
+
+dataset:
+  name: "seedv"
+  params:
+    root_dir: ./data/SEED-V/
+    h5file: scratch3.h5
+    participants: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+
+splitter:
+  name: "random"
+  params:
+    train_ratio: 0.8
+
+model:
+  name: "atcnet"
+  params:
+    n_chans: 62
+    n_classes: 5
+    input_window_seconds: 6
+    sfreq: 200
+
+optimizer:
+  name: "adam"
+  params:
+    lr: 0.003  # Adjusted learning rate based on batch size scaling
+
+scheduler:
+  name: "cosine_warmup"
+  params:
+    T_0: 20        # Number of epochs for the first cycle
+    T_mult: 1      # Maintain consistent cycle length
+    eta_min: 0.0006  # Minimum LR
+    warmup_epochs: 5  # Add warmup epochs to stabilize large LR
+    warmup_start_lr: 0.0003  # Start with a smaller LR during warmup
+
+epochs: 300
+batch_size: 1024  # Increased batch size to leverage larger VRAM
+eval_every: 5
+patience: 30
