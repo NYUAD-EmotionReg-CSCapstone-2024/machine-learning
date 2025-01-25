@@ -10,6 +10,8 @@ venv/
 
 # Experiment logs/models
 experiments/
+builds/
+hpc/
 
 # Config files
 config/*.yaml

@@ -7,7 +7,6 @@ from datasets.seedv.builder import SeedVBuilder
 MANDATORY_PARAMS = ["root_dir", "dataset", "outfile"]
 DEFAULT_PARAMS = {
     "chunk_duration": 1,
-    "overlap": 0,
 }
 OPTIONAL_PARAMS = ["notch_freq", "bandpass_freqs", "resample_freq", "normalize"]
 
@@ -16,7 +15,7 @@ ALL_PARAMS = MANDATORY_PARAMS + list(DEFAULT_PARAMS.keys()) + OPTIONAL_PARAMS
 
 def load_config(config_file):
     """Load and return the configuration from a YAML file."""
-    config_path = os.path.join("./configs/datasets", f"{config_file}.yaml")
+    config_path = os.path.join("./config/builds", f"{config_file}.yaml")
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found: {config_path}")
     with open(config_path, "r") as f:
@@ -40,8 +39,6 @@ def validate_values(config):
     """Validate the values of the configuration parameters."""
     if config["dataset"] not in ["seedv"]:
         raise ValueError(f"Invalid dataset: {config['dataset']}")
-    if not (0 <= config["overlap"] <= 1):
-        raise ValueError("Overlap must be between 0 and 1")
     if "notch_freq" in config and config["notch_freq"] <= 0:
         raise ValueError("Notch frequency must be positive")
     if "bandpass_freqs" in config:
@@ -70,7 +67,6 @@ def build_dataset(config, overwrite):
         outfile=f"{config['outfile']}.h5", # h5file
         overwrite=overwrite,
         chunk_duration=config["chunk_duration"],
-        overlap=config["overlap"],
         preprocessors=create_preprocessors(config)
     )
 

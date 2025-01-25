@@ -9,11 +9,10 @@ This repository handles the development of the machine learning model for the ca
 Create a build config file inside `config/builds` named `set_{uniq_num}.yaml` with the following:
 
 ```yaml
-root_dir: "/data/SEED-V"
-dataset: "seedv"
-outfile: "seedv4s0o"
-chunk_duration: 4
-overlap: 0
+root_dir: "/data/SEED-V"              # Raw EEG Dataset Location
+dataset: "seedv"                      # Type of dataset
+outfile: "seedv4s0o"                  # Dataset outfile name
+chunk_duration: 4                     # EEG Window duration length
 
 # Optional preprocessing
 notch_freq: 50
@@ -22,6 +21,16 @@ bandpass_freqs:
   - 50
 resample_freq: 200
 normalize: True
+```
+
+You can then run: 
+```
+python build.py --config {config_file_name} --overwrite {True/False}
+```
+
+For example: 
+```
+python build.py --config set_00 --overwrite
 ```
 
 ### To train the model
@@ -35,35 +44,62 @@ device: "cuda:0"
 
 # Dataset configuration
 dataset:
-  name: "seedv"
+  name: "seedv"                       # Name of the dataset
   params:
-    root_dir: /data/SEED-V/
-    h5file: seedv4s0o.h5
-    participants: [1, 2]
-    sessions: [1, 2, 3]
-    emotions: [0, 1, 2, 3, 4]
-    load_all: False # make it True if you have enough memory
+    root_dir: /data/SEED-V/           # Dataset location
+    h5file: seedv4s0o.h5              # Processed dataset h5 file
+    participants: [1, 2]              # SEEDV - 16 Participants
+    sessions: [1, 2, 3]               # SEEDV - 3 Sessions
+    emotions: [0, 1, 2, 3, 4]         # SEEDV - 5 Emotion labels
+    load_all: False                   # True if you have enough memory
 
 # Model configuration
 model:
-  name: "atcnet"
-  params:
-    n_chans: 62
+  name: "atcnet"                      # Name of the model
+  params:                             # Look in factory for model params
+    n_chans: 62                        
     n_classes: 5
     input_window_seconds: 4
     sfreq: 200
 
+# Splitting configuration 
+splitter:
+  name: random                        # Splitter method
+  dataset: seedv4s0o.h5               # Dataset used for splitting
+  params:                             # Look in factory for splitter params
+    train_ratio: 0.8
+    overlap_ratio: 0.5
+    shuffle: True 
+    
 # Optimizer configuration
 optimizer:
-  name: "adam"
+  name: "adam"                        # Type of optimizer
   params:
-    lr: 0.0005
+    lr: 0.0005                        # Learning Rate
+
+# Scheduler configuration
+scheduler:
+  name: "cosine_warmup"               # Scheduler name
+  params:
+    T_0: 10                           # No. of epochs before restart
+    T_mult: 1                         # Multiplicative factor T_0 * T_mult
+    eta_min: 0.0001                   # Minimum Learning Rate
 
 # Training configuration
-epochs: 100
-batch_size: 256
-eval_every: 5
-patience: 10
+epochs: 100                           # Epochs (time)
+batch_size: 256                       # Batch Size per epoch
+eval_every: 5                         # Validation Results every n epoch
+patience: 10                          # No. of epochs before early stop
+```
+
+You can then run: 
+```
+python train.py --config {config_file_name} --load {True/False} --resume {True/False}
+```
+
+For example: 
+```
+python train.py --config exp_00 --load --resume
 ```
 
 # Training Logs and Checkpoints

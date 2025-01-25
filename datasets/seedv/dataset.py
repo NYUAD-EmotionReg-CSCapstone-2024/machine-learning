@@ -44,6 +44,7 @@ class SeedVDataset(Dataset):
         self.h5file = h5.File(os.path.join(root_dir, h5file), "r")
         self.transform = transform
         self.data_ids = []
+        self.segments = []  # Store metadata for each segment
 
         self.participants = participants
         self.sessions = sessions
@@ -69,30 +70,44 @@ class SeedVDataset(Dataset):
             if str(pid) not in self.h5file:
                 raise ValueError(f"Participant {pid} not found in the dataset.")
             for sid in self.sessions:
-                # escape participant 7 session 1 (not working yet, need to fix)
-                if str(pid) == "7" and str(sid) == "1":
-                    continue
                 if str(sid) not in self.h5file[str(pid)]:
                     raise ValueError(f"Session {sid} not found for participant {pid}.")
                 for emotion in self.emotions:
-                    emotion = str(emotion)
-                    if emotion not in self.h5file[str(pid)][str(sid)]:
-                        raise ValueError(f"Emotion {emotion} not found for participant {pid} in session {sid}.")
+                    if str(emotion) not in self.h5file[str(pid)][str(sid)]:
+                        continue
         for channel in self.channels:
             if channel not in channel_mappings:
                 raise ValueError(f"Channel {channel} not found in the channel mappings.")
 
 
     def _collect_data_ids(self):
+        """Collect metadata for non-overlapping segments."""
+        temp_data_ids = []
+        temp_segments = []
+
         for pid in self.participants:
             for sid in self.sessions:
-                # escape participant 7 session 1 (not working yet, need to fix)
-                if str(pid) == "7" and str(sid) == "1":
-                    continue
                 for emotion in self.emotions:
+                    if emotion not in self.h5file[str(pid)][str(sid)]:
+                        continue
+                    
                     data_ids = list(self.h5file[str(pid)][str(sid)][str(emotion)].keys())
                     self.data_ids.extend(data_ids)
-        np.random.shuffle(self.data_ids)
+
+                    for data_id in self.h5file[str(pid)][str(sid)][str(emotion)]:
+                        data_attrs = self.h5file[str(pid)][str(sid)][str(emotion)][data_id].attrs
+                        
+                        # Append to temporary segments and dataids
+                        temp_data_ids.append(data_id)
+                        temp_segments.append({
+                            "data_id": data_id,
+                            "start": data_attrs["start"],
+                            "end": data_attrs["end"],
+                        })
+        # Shuffle data IDs and segments together to maintain alignment
+        combined = list(zip(temp_data_ids, temp_segments))
+        np.random.shuffle(combined)
+        self.data_ids, self.segments = zip(*combined)
 
     def _load_in_memory(self):
         self.data = []

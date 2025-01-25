@@ -5,7 +5,7 @@ from torch.utils.data import Subset
 
 class KFoldSplitter(DatasetSplitter):
     """
-    K-Fold splitter for datasets.
+    K-Fold splitter for datasets with overlap.
     
     This class splits the dataset into K folds for cross-validation. The user can specify 
     the fold index to use as the test set, with all remaining folds serving as the training set.
@@ -14,10 +14,12 @@ class KFoldSplitter(DatasetSplitter):
         dataset (Dataset): The dataset to be split.
         k (int): The number of folds for cross-validation.
         shuffle (bool): Whether to shuffle the dataset indices before splitting. Defaults to True.
+        overlap_ratio (float): The ratio of overlap between consecutive chunks.
     """
-    def __init__(self, dataset, k: int, shuffle: bool = True) -> None:
+    def __init__(self, dataset, k: int, shuffle: bool = True, overlap_ratio: float = 0.5) -> None:
         super().__init__(dataset, shuffle)
         self.k: int = k
+        self.overlap_ratio: float = overlap_ratio  
 
         if self.shuffle:
             self._shuffle()
@@ -27,12 +29,6 @@ class KFoldSplitter(DatasetSplitter):
     def set_fold(self, fold_idx: int) -> None:
         """
         Sets the current fold index, defining which fold will be used as the test set.
-        
-        Args:
-            fold_idx (int): The index of the fold to be used as the test set.
-        
-        Raises:
-            ValueError: If fold_idx is not within the valid range [0, k-1].
         """
         if fold_idx < 0 or fold_idx >= self.k:
             raise ValueError(f"Invalid fold index: {fold_idx}. Must be between 0 and {self.k - 1}.")
@@ -42,7 +38,12 @@ class KFoldSplitter(DatasetSplitter):
         
         # Exclude test set indices from the full dataset indices to get the training set
         test_set: Set[int] = set(self.test_indices)
-        self.train_indices: List[int] = [idx for idx in self.indices if idx not in test_set]
+        train_base = [self.dataset.segments[idx] for idx in self.indices if idx not in test_set]
+        test_base = [self.dataset.segments[idx] for idx in self.test_indices]
+
+        # Apply overlap to each split
+        self.train_indices = self.generate_overlapping_chunks(train_base, self.overlap_ratio)
+        self.test_indices = self.generate_overlapping_chunks(test_base, self.overlap_ratio)
 
     def _shuffle(self) -> None:
         """Shuffles the indices of the dataset in place."""

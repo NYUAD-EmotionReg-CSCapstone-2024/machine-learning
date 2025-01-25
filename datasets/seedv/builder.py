@@ -3,7 +3,7 @@ import mne
 import warnings
 
 import h5py as h5
-
+import pandas as pd
 from tqdm import tqdm
 
 from ..EEGPreprocessor import EEGPreprocessor
@@ -13,6 +13,7 @@ from .session_labels import _original_session_labels as session_labels
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 _channels_to_drop = ['M1', 'M2', 'VEO', 'HEO']
+_scores_file_path = os.path.join(os.path.dirname(__file__), "scores.csv")
 
 class SeedVBuilder:
     '''
@@ -31,18 +32,24 @@ class SeedVBuilder:
         self.root_dir = root_dir
         
         raw_files = os.listdir(os.path.join(root_dir, "EEG_raw"))
-        self.cnt_files = [
+        self.eeg_files = [
             os.path.join(root_dir, "EEG_raw", file)
             for file in raw_files 
-            if file.endswith(".cnt")
+            if file.endswith(".cnt") or file.endswith(".edf")
         ]
+
+        if not os.path.exists(_scores_file_path):
+            raise FileNotFoundError(f"Scores file not found at {_scores_file_path}")
+        try:
+            self.scores_df = pd.read_csv(_scores_file_path)
+        except Exception as e:
+            raise RuntimeError(f"Error loading scores file: {e}")
 
     def build(
             self, 
             outfile, 
             overwrite,
             chunk_duration, 
-            overlap,
             preprocessors
         ):
         '''
@@ -55,8 +62,6 @@ class SeedVBuilder:
             Duration of each chunk in seconds
         resample_freq: int
             Frequency to resample the EEG data to
-        overlap: int
-            Overlap between consecutive chunks in percent (0-1)
         preprocessors: list
             List of preprocessors to apply to the raw EEG data
             notch, bandpass, resample, eog_removal, normalize
@@ -69,45 +74,69 @@ class SeedVBuilder:
             open_mode = "a"
 
         eeg_preprocessor = EEGPreprocessor()
+        s_freq = None
 
         with h5.File(outfile_path, open_mode) as f:
-            for cnt_file in tqdm(self.cnt_files, desc="Processing files"):
-                file_name = os.path.basename(cnt_file)
-                pid, sid, _ = file_name.replace(".cnt", "").split("_")
+            for eeg_file in tqdm(self.eeg_files, desc="Processing files"):
+                file_name = os.path.basename(eeg_file)
+
+                # File 7_1 is in a different format due to corruption
+                if file_name.endswith(".cnt"):
+                    pid, sid, _ = file_name.replace(".cnt", "").split("_")
+                elif file_name.endswith(".edf"): 
+                    pid, sid, _ = file_name.replace(".edf", "").split("_")
 
                 if file_exists and pid in f and sid in f[pid]:
-                    print(f"Skipping {cnt_file} as it already exists in the dataset.")
+                    print(f"Skipping {eeg_file} as it already exists in the dataset.")
                     continue
                 
                 try:
                     # preload = True to load the data into memory, otherwise it takes forever
-                    raw_data = mne.io.read_raw_cnt(cnt_file, data_format='int32', preload=True, verbose=False)
+                    if(eeg_file.endswith(".cnt")):
+                        raw_data = mne.io.read_raw_cnt(eeg_file, data_format='int32', preload=True, verbose=False)
+                    elif(eeg_file.endswith(".edf")):
+                        raw_data = mne.io.read_raw_edf(eeg_file, preload=True, verbose=False)
                     raw_data.drop_channels(_channels_to_drop) # drop unused channels
                     raw_data = eeg_preprocessor.preprocess(raw_data, preprocessors) # apply diff filters
                     s_freq = raw_data.info["sfreq"]
                     raw_data = raw_data.get_data() # (n_samples, n_channels) ndarray
                 except Exception as e:
-                    print(f"Error processing {cnt_file}: {e}")
+                    print(f"Error processing {eeg_file}: {e}")
                     continue  # Skip to the next file
 
                 session_info = session_labels[int(sid)] # ground truth labels for the sessions
                 n_samples = int(chunk_duration * s_freq)
-                for start_sec, end_sec, label in zip(session_info["start"], session_info["end"], session_info["labels"]):
+                for mid, (start_sec, end_sec, label) in enumerate(zip(session_info["start"], session_info["end"], session_info["labels"])):
+                    # Check if this movie is valid for processing based on scores.csv
+                    score_row = self.scores_df[
+                        (self.scores_df["pid"] == int(pid)) & 
+                        (self.scores_df["sid"] == int(sid)) & 
+                        (self.scores_df["mid"] == mid + 1)
+                    ]
+                    if score_row.empty or score_row.iloc[0]["binary"] == 0:
+                        continue  # Skip this movie if binary flag is 0
+                    
                     start_idx = int(start_sec * s_freq)
                     end_idx = int(end_sec * s_freq)
 
-                    overlap_samples = int(n_samples * overlap)
-
-                    # iterate through chunks
-                    for i in range(start_idx, end_idx, n_samples - overlap_samples):
+                    # iterate through chunks (NO OVERLAP HERE)
+                    for i in range(start_idx, end_idx, n_samples):
                         chunk = raw_data[:, i:i+n_samples]
-                        if chunk.shape[1] < n_samples: # ignore the last chunk if it's too short
+                        if chunk.shape[1] < n_samples:  # ignore the last chunk if it's too short
                             continue
+
+                        # Add metadata for start and end indices
+                        chunk_meta = {"start": i, "end": i + n_samples}
+
+                        # Create hierarchical groups in the HDF5 file
                         p_group = f.require_group(str(pid))
                         s_group = p_group.require_group(str(sid))
                         e_group = s_group.require_group(str(label))
 
+                        # Save chunk and metadata
                         chunk_id = f"{pid}_{sid}_{label}_{i}"
-                        e_group.create_dataset(chunk_id, data=chunk, chunks=True, compression="gzip")
+                        dataset = e_group.create_dataset(chunk_id, data=chunk, chunks=True, compression="gzip")
+                        dataset.attrs.update(chunk_meta)
+
 
         print(f"Dataset with frequency {s_freq} Hz and chunk duration {chunk_duration} sec saved to {outfile_path}.")

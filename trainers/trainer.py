@@ -16,6 +16,7 @@ class Trainer(ABC):
         self.model = model
         self.loss_fn = loss_fn
         self.optimizer = optimizer
+        self.scheduler = None
         self.exp_dir = exp_dir
         self.device = device
 
@@ -27,13 +28,21 @@ class Trainer(ABC):
             "val_loss": [],
             "acc": []
         }
+    def set_scheduler(self, scheduler):
+        """Add scheduler to trainer after initialization"""
+        self.scheduler = scheduler
 
     def _setup_logger(self, exp_dir, mode="w"):
         """Set up the logger to log training information."""
         self.logger = logging.getLogger(__name__)
+
+        # Remove any previous existing handlers
+        if self.logger.hasHandlers():
+            self.logger.handlers.clear()
+
         self.logger.setLevel(logging.INFO)
         log_file = os.path.join(exp_dir, "train.log")
-        file_handler = logging.FileHandler(log_file, mode=mode)
+        file_handler = logging.FileHandler(log_file, mode=mode, encoding="utf-8")
         formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
@@ -115,6 +124,11 @@ class Trainer(ABC):
                 running_loss += loss.item()
                 pbar.set_postfix({"loss": running_loss / (idx + 1)})
                 pbar.update()
+
+        # Step the scheduler after each epoch
+        if self.scheduler is not None:
+            self.scheduler.step()
+            
         return running_loss / len(self.train_loader)
 
     def _resume_training(self):
