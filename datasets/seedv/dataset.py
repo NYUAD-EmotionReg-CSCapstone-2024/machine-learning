@@ -88,7 +88,7 @@ class SeedVDataset(Dataset):
         for pid in self.participants:
             for sid in self.sessions:
                 for emotion in self.emotions:
-                    if emotion not in self.h5file[str(pid)][str(sid)]:
+                    if str(emotion) not in self.h5file[str(pid)][str(sid)]:
                         continue
                     
                     data_ids = list(self.h5file[str(pid)][str(sid)][str(emotion)].keys())
@@ -108,6 +108,8 @@ class SeedVDataset(Dataset):
         combined = list(zip(temp_data_ids, temp_segments))
         np.random.shuffle(combined)
         self.data_ids, self.segments = zip(*combined)
+        self.data_ids, self.segments = list(self.data_ids), list(self.segments) 
+
 
     def _load_in_memory(self):
         self.data = []
@@ -137,6 +139,9 @@ class SeedVDataset(Dataset):
         return chunk, label
 
     def __getitem__(self, idx):
+        data_id = idx['data_id']  
+        idx = self.data_ids.index(data_id)  
+
         if self.load:
             chunk, label = self._get_from_memory(idx)
         else:
