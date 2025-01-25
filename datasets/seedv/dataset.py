@@ -100,9 +100,6 @@ class SeedVDataset(Dataset):
                         # Append to temporary segments and dataids
                         temp_data_ids.append(data_id)
                         temp_segments.append({
-                            "pid": pid,
-                            "sid": sid,
-                            "emotion": emotion,
                             "data_id": data_id,
                             "start": data_attrs["start"],
                             "end": data_attrs["end"],

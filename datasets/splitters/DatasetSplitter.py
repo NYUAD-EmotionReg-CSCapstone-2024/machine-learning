@@ -65,20 +65,21 @@ class DatasetSplitter(ABC):
         if not (0 <= overlap_ratio <= 1):
             raise ValueError("Overlap must be between 0 and 1")
 
-        # Map the dictionary back into the appropriate index for training
-        segment_to_index = {segment["data_id"]: idx for idx, segment in enumerate(self.dataset.segments)}
         overlapping_chunks = []
+
         for segment in base_segments:
             start = segment["start"]
             end = segment["end"]
             segment_length = end - start
-            overlap_length = int(segment_length * overlap_ratio)
+            overlap_step = int(segment_length * (1 - overlap_ratio))
 
-            # Generate overlapping segments
-            for i in range(start, end - segment_length + 1, max(segment_length - overlap_length, 1)):
+            # Generate overlapping chunks within this segment
+            current_start = start
+            while current_start + segment_length <= end:  # Ensure chunks stay within the segment range
                 overlapped_segment = segment.copy()
-                overlapped_segment["start"] = i
-                overlapped_segment["end"] = i + segment_length
-                overlapping_chunks.append(segment_to_index[overlapped_segment["data_id"]])
+                overlapped_segment["start"] = current_start
+                overlapped_segment["end"] = current_start + segment_length
+                overlapping_chunks.append(overlapped_segment)
+                current_start += overlap_step  # Move to the next starting point for overlap
 
         return overlapping_chunks
