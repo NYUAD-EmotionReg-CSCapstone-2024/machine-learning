@@ -7,6 +7,7 @@ from datasets.seedv.builder import SeedVBuilder
 MANDATORY_PARAMS = ["root_dir", "dataset", "outfile"]
 DEFAULT_PARAMS = {
     "chunk_duration": 1,
+    "overlap": 0,
 }
 OPTIONAL_PARAMS = ["notch_freq", "bandpass_freqs", "resample_freq", "normalize"]
 
@@ -67,6 +68,7 @@ def build_dataset(config, overwrite):
         outfile=f"{config['outfile']}.h5", # h5file
         overwrite=overwrite,
         chunk_duration=config["chunk_duration"],
+        overlap=config["overlap"],
         preprocessors=create_preprocessors(config)
     )
 

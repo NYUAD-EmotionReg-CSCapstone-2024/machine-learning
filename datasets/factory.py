@@ -18,17 +18,16 @@ class SplitterFactory(BaseFactory):
         "random": {
             "splitter": RandomSplitter,
             "mandatory_params": ["dataset"],
-            "optional_params": ["train_ratio", "shuffle", "overlap_ratio"]  
+            "optional_params": ["train_ratio", "shuffle"]  
         },
         "lnso": {
             "splitter": LNSOSplitter,
             "mandatory_params": ["dataset", "num_participants"],
-            "optional_params": ["overlap_ratio"]  
         },
         "kfold": {
             "splitter": KFoldSplitter,
             "mandatory_params": ["dataset", "k"],
-            "optional_params": ["shuffle", "overlap_ratio"]  
+            "optional_params": ["shuffle"]  
         }
     }
     ITEM_KEY = "splitter"

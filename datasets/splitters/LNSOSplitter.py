@@ -17,12 +17,11 @@ class LNSOSplitter(DatasetSplitter):
         shuffle (bool): Whether to shuffle the dataset indices before splitting. Defaults to True.
         overlap_ratio (float): The ratio of overlap between consecutive chunks.
     """
-    def __init__(self, dataset: Dataset, num_participants: Union[int, List[int]], overlap_ratio: float = 0.5) -> None:
+    def __init__(self, dataset: Dataset, num_participants: Union[int, List[int]]) -> None:
         super().__init__(dataset)
         
         self.participants: List[str] = dataset.participants
         self.data_ids: List[str] = dataset.data_ids
-        self.overlap_ratio: float = overlap_ratio  
 
         # Determine the number of participants to leave out
         if isinstance(num_participants, List):
@@ -43,9 +42,9 @@ class LNSOSplitter(DatasetSplitter):
         self._split()
 
     def _split(self) -> None:
-        """Splits dataset into training and testing sets based on participants."""
-        train_base = []
-        test_base = []
+        """Splits dataset into training and testing sets based on participants."""  
+        self.train_indices: List[int] = []
+        self.test_indices: List[int] = []
 
         for idx, data_id in enumerate(self.data_ids):
             # Extract participant ID from the data_id
@@ -53,10 +52,6 @@ class LNSOSplitter(DatasetSplitter):
 
             # Assign to train or test set based on participant ID
             if int(pid) in self.train_participants or pid in self.train_participants:
-                train_base.append(self.dataset.segments[idx])
+                self.train_indices.append(idx)
             else:
-                test_base.append(self.dataset.segments[idx])
-
-        # Apply overlap to the base segments for training and testing
-        self.train_indices = self.generate_overlapping_chunks(train_base, self.overlap_ratio)
-        self.test_indices = self.generate_overlapping_chunks(test_base, self.overlap_ratio)
+                self.test_indices.append(idx)

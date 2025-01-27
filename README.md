@@ -13,6 +13,7 @@ root_dir: "/data/SEED-V"              # Raw EEG Dataset Location
 dataset: "seedv"                      # Type of dataset
 outfile: "seedv4s0o"                  # Dataset outfile name
 chunk_duration: 4                     # EEG Window duration length
+overlap: 0.5                          # Chunk window overlap ratio
 
 # Optional preprocessing
 notch_freq: 50
@@ -68,7 +69,6 @@ splitter:
   dataset: seedv4s0o.h5               # Dataset used for splitting
   params:                             # Look in factory for splitter params
     train_ratio: 0.8
-    overlap_ratio: 0.5
     shuffle: True 
     
 # Optimizer configuration

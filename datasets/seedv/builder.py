@@ -49,7 +49,8 @@ class SeedVBuilder:
             self, 
             outfile, 
             overwrite,
-            chunk_duration, 
+            chunk_duration,
+            overlap, 
             preprocessors
         ):
         '''
@@ -58,10 +59,12 @@ class SeedVBuilder:
             HDF5 output file name
         overwrite: bool
             Whether to overwrite the existing file
-        chunk_duration: int
+       chunk_duration: int
             Duration of each chunk in seconds
         resample_freq: int
             Frequency to resample the EEG data to
+        overlap: int
+            Overlap between consecutive chunks in percent (0-1)
         preprocessors: list
             List of preprocessors to apply to the raw EEG data
             notch, bandpass, resample, eog_removal, normalize
@@ -104,7 +107,7 @@ class SeedVBuilder:
                     print(f"Error processing {eeg_file}: {e}")
                     continue  # Skip to the next file
 
-                session_info = session_labels[int(sid)] # ground truth labels for the sessions
+                session_info = session_labels[int(sid)] # Ground truth labels for the sessions
                 n_samples = int(chunk_duration * s_freq)
                 for mid, (start_sec, end_sec, label) in enumerate(zip(session_info["start"], session_info["end"], session_info["labels"])):
                     # Check if this movie is valid for processing based on scores.csv
@@ -119,24 +122,18 @@ class SeedVBuilder:
                     start_idx = int(start_sec * s_freq)
                     end_idx = int(end_sec * s_freq)
 
-                    # iterate through chunks (NO OVERLAP HERE)
-                    for i in range(start_idx, end_idx, n_samples):
+                    overlap_samples = int(n_samples * overlap)
+
+                    # Iterate through chunks 
+                    for i in range(start_idx, end_idx, n_samples - overlap_samples):
                         chunk = raw_data[:, i:i+n_samples]
-                        if chunk.shape[1] < n_samples:  # ignore the last chunk if it's too short
+                        if chunk.shape[1] < n_samples: # Ignore the last chunk if it's too short
                             continue
-
-                        # Add metadata for start and end indices
-                        chunk_meta = {"start": i, "end": i + n_samples}
-
-                        # Create hierarchical groups in the HDF5 file
                         p_group = f.require_group(str(pid))
                         s_group = p_group.require_group(str(sid))
                         e_group = s_group.require_group(str(label))
 
-                        # Save chunk and metadata
                         chunk_id = f"{pid}_{sid}_{label}_{i}"
-                        dataset = e_group.create_dataset(chunk_id, data=chunk, chunks=True, compression="gzip")
-                        dataset.attrs.update(chunk_meta)
-
+                        e_group.create_dataset(chunk_id, data=chunk, chunks=True, compression="gzip")
 
         print(f"Dataset with frequency {s_freq} Hz and chunk duration {chunk_duration} sec saved to {outfile_path}.")
