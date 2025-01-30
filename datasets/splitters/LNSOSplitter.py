@@ -22,10 +22,10 @@ class LNSOSplitter(DatasetSplitter):
     """
     def __init__(self, dataset: Dataset, num_participants: Union[int, List[int]], shuffle: bool = True) -> None:
         super().__init__(dataset, shuffle)
-
+        
         self.participants: List[str] = dataset.participants
         self.data_ids: List[str] = dataset.data_ids
-
+        
         # Determine the number of participants to leave out
         if isinstance(num_participants, List):
             # Check if all participants are valid
@@ -33,7 +33,7 @@ class LNSOSplitter(DatasetSplitter):
                 if pid not in self.participants:
                     raise ValueError(f"Invalid participant ID: {pid}. Participant not found in the dataset.")
             self.test_participants: Set[str] = set(num_participants)
-            self.train_subjects: Set[str] = set(self.participants) - self.test_participants
+            self.train_participants: Set[str] = set(self.participants) - self.test_participants
         else:
             if num_participants < 1 or num_participants >= len(self.participants):
                 raise ValueError(f"Invalid number of participants: {num_participants}. \
@@ -45,24 +45,24 @@ class LNSOSplitter(DatasetSplitter):
         # Shuffle if needed
         if shuffle:
             self._shuffle()
-
+        
         # Split the data based on the participants
         self._split()
-
+    
     def _shuffle(self) -> None:
         """Shuffles the dataset's indices and participants in place."""
         np.random.shuffle(self.participants)
         self.indices = np.random.permutation(len(self.data_ids))
-
+    
     def _split(self) -> None:
         """Splits dataset into training and testing sets based on participants."""
         self.train_indices: List[int] = []
         self.test_indices: List[int] = []
-
+        
         for idx, data_id in enumerate(self.data_ids):
             # Extract participant ID from the data_id
             pid = data_id.split("_")[0]
-
+            
             # Assign to train or test set based on participant ID
             if int(pid) in self.train_participants:
                 self.train_indices.append(idx)
