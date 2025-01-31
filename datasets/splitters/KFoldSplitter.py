@@ -16,10 +16,9 @@ class KFoldSplitter(DatasetSplitter):
         shuffle (bool): Whether to shuffle the dataset indices before splitting. Defaults to True.
         overlap_ratio (float): The ratio of overlap between consecutive chunks.
     """
-    def __init__(self, dataset, k: int, shuffle: bool = True, overlap_ratio: float = 0.5) -> None:
+    def __init__(self, dataset, k: int, shuffle: bool = True) -> None:
         super().__init__(dataset, shuffle)
         self.k: int = k
-        self.overlap_ratio: float = overlap_ratio  
 
         if self.shuffle:
             self._shuffle()
@@ -38,12 +37,8 @@ class KFoldSplitter(DatasetSplitter):
         
         # Exclude test set indices from the full dataset indices to get the training set
         test_set: Set[int] = set(self.test_indices)
-        train_base = [self.dataset.segments[idx] for idx in self.indices if idx not in test_set]
-        test_base = [self.dataset.segments[idx] for idx in self.test_indices]
+        self.train_indices: List[int] = [idx for idx in self.indices if idx not in test_set]
 
-        # Apply overlap to each split
-        self.train_indices = self.generate_overlapping_chunks(train_base, self.overlap_ratio)
-        self.test_indices = self.generate_overlapping_chunks(test_base, self.overlap_ratio)
 
     def _shuffle(self) -> None:
         """Shuffles the indices of the dataset in place."""

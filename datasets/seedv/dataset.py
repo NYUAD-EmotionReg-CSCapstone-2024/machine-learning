@@ -44,7 +44,6 @@ class SeedVDataset(Dataset):
         self.h5file = h5.File(os.path.join(root_dir, h5file), "r")
         self.transform = transform
         self.data_ids = []
-        self.segments = []  # Store metadata for each segment
 
         self.participants = participants
         self.sessions = sessions
@@ -81,10 +80,7 @@ class SeedVDataset(Dataset):
 
 
     def _collect_data_ids(self):
-        """Collect metadata for non-overlapping segments."""
-        temp_data_ids = []
-        temp_segments = []
-
+        """Collect data_ids"""
         for pid in self.participants:
             for sid in self.sessions:
                 for emotion in self.emotions:
@@ -94,22 +90,8 @@ class SeedVDataset(Dataset):
                     data_ids = list(self.h5file[str(pid)][str(sid)][str(emotion)].keys())
                     self.data_ids.extend(data_ids)
 
-                    for data_id in self.h5file[str(pid)][str(sid)][str(emotion)]:
-                        data_attrs = self.h5file[str(pid)][str(sid)][str(emotion)][data_id].attrs
-                        
-                        # Append to temporary segments and dataids
-                        temp_data_ids.append(data_id)
-                        temp_segments.append({
-                            "data_id": data_id,
-                            "start": data_attrs["start"],
-                            "end": data_attrs["end"],
-                        })
-        # Shuffle data IDs and segments together to maintain alignment
-        combined = list(zip(temp_data_ids, temp_segments))
-        np.random.shuffle(combined)
-        self.data_ids, self.segments = zip(*combined)
-        self.data_ids, self.segments = list(self.data_ids), list(self.segments) 
-
+        # Shuffle data IDs 
+        np.random.shuffle(self.data_ids)
 
     def _load_in_memory(self):
         self.data = []
@@ -139,9 +121,6 @@ class SeedVDataset(Dataset):
         return chunk, label
 
     def __getitem__(self, idx):
-        data_id = idx['data_id']  
-        idx = self.data_ids.index(data_id)  
-
         if self.load:
             chunk, label = self._get_from_memory(idx)
         else:
