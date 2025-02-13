@@ -11,7 +11,7 @@
 #SBATCH --error=/scratch/ap7146/machine-learning/logs/train_%A_%a.err    
 #SBATCH --mail-type=END,FAIL,TIME_LIMIT
 #SBATCH --mail-user=ap7146@nyu.edu
-#SBATCH --array=0-1
+#SBATCH --array=0-6
 
 # Initialize the modules system
 source /etc/profile.d/modules.sh
@@ -36,7 +36,7 @@ print('GPU:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N
 "
 
 # Array of configuration file names
-config_files=("ATCNet_2p_0o" "ERTNet_2p_0o")
+config_files=("atcnet" "ertnet" "eegnet" "shallownet" "cnn_bilstm" "grunet" "deepconvnet")
 
 # Get the config file corresponding to the current task ID
 config_file=${config_files[$SLURM_ARRAY_TASK_ID]}

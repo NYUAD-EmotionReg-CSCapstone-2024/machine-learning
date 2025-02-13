@@ -149,3 +149,21 @@ experiments/
     ├── train.log
     ├── metrics.png
 ```
+
+## Using HPC
+
+Please make sure the latest repository is in your scratch/[NETID] folder. Once that is done follow these steps for the setup: 
+
+1. Make sure all the config/experiments you want to run are there
+2. Create an empty folder titled `logs` within the repository to see log outputs if needed
+3. Edit the script: `hpc/hpc_train.sh`
+
+In the `hpc/hpc_train.sh` script, look for the following values: 
+- `#SBATCH --array=0-6`: Please adjust how many jobs you would like to run simultaneously. In this example we are running 7 jobs (job 0 - job 6)
+- `config_files=("exp_01" "exp_01")`: Please the name of your config files here
+- Obviously change the directories to your NETID
+
+4. If the above is all ready, then in the terminal you can run: `sbatch hpc/hpc_train.sh` to execute the job.  
+
+
+
