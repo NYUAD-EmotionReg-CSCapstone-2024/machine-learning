@@ -22,19 +22,19 @@ class LNSOSplitter(DatasetSplitter):
         
         self.participants: List[str] = dataset.participants
         self.data_ids: List[str] = dataset.data_ids
+        self.num_participants: int = num_participants
 
         # Determine the number of participants to leave out
-        if isinstance(num_participants, List):
+        if isinstance(self.num_participants, List):
             # Check if all participants are valid
-            for pid in num_participants:
+            for pid in self.num_participants:
                 if pid not in self.participants:
                     raise ValueError(f"Invalid participant ID: {pid}. Participant not found in the dataset.")
-            self.test_participants: Set[str] = set(num_participants)
+            self.test_participants: Set[str] = set(self.num_participants)
             self.train_participants: Set[str] = set(self.participants) - self.test_participants
         else:
-            if num_participants < 1 or num_participants >= len(self.participants):
-                raise ValueError(f"Invalid number of participants: {num_participants} : Must be between 1 and {len(self.participants)-1}.")
-            self.num_participants: int = num_participants
+            if self.num_participants < 1 or self.num_participants >= len(self.participants):
+                raise ValueError(f"Invalid number of participants: {self.num_participants} : Must be between 1 and {len(self.participants)-1}.")
             self.test_participants: Set[str] = set(self.participants[:self.num_participants])
             self.train_participants: Set[str] = set(self.participants[self.num_participants:])
         

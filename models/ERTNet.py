@@ -1,41 +1,51 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import math
 
 class PositionalEncoding(nn.Module):
-    def __init__(self, d_model, max_len=5000):
+    def __init__(self, d_model, max_len=2400):
         super(PositionalEncoding, self).__init__()
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
-        pe = pe.unsqueeze(0)
+        pe = pe.transpose(0, 1).unsqueeze(0)  
         self.register_buffer('pe', pe)
 
     def forward(self, x):
-        return x + self.pe[:, :x.size(1)]
+        return x + self.pe[:, :, :x.size(2)]
 
 class TransformerBlock(nn.Module):
-    def __init__(self, embed_dim, num_heads, rate=0.1):
+    def __init__(self, d_model=64, num_heads=8, dim_feedforward=256, dropout=0.1):
         super(TransformerBlock, self).__init__()
-        self.att = nn.MultiheadAttention(embed_dim, num_heads)
-        self.ffn = nn.Linear(embed_dim, embed_dim)
-        self.layernorm1 = nn.LayerNorm(embed_dim, eps=1e-6)
-        self.layernorm2 = nn.LayerNorm(embed_dim, eps=1e-6)
-        self.dropout = nn.Dropout(rate)
+        self.attention = nn.MultiheadAttention(embed_dim=d_model, num_heads=num_heads, dropout=dropout)
+        self.norm1 = nn.LayerNorm(d_model)
+        self.ffn = nn.Sequential(
+            nn.Linear(d_model, dim_feedforward),
+            nn.ReLU(),
+            nn.Linear(dim_feedforward, d_model)
+        )
+        self.norm2 = nn.LayerNorm(d_model)
+        self.dropout = nn.Dropout(dropout)
 
-    def forward(self, inputs):
-        attn_output, _ = self.att(inputs, inputs, inputs)
-        out1 = self.layernorm1(inputs + attn_output)
-        ffn_output = self.ffn(out1)
-        ffn_output = self.dropout(ffn_output)
-        out = self.layernorm2(out1 + ffn_output)
-        return out
+    def forward(self, x):
+        x = x.permute(2, 0, 1)  # Change to (seq_len, batch, feature)
+        
+        # Multi-Head Attention
+        attn_out, _ = self.attention(x, x, x)
+        x = self.norm1(x + self.dropout(attn_out))  # Residual Connection 1
+        
+        # Feed-Forward Network
+        ffn_out = self.ffn(x)
+        x = self.norm2(x + self.dropout(ffn_out))  # Residual Connection 2
+        
+        x = x.permute(1, 2, 0)  # Back to (batch, feature, seq_len)
+        return x
+
 
 class ERTNet(nn.Module):
-    def __init__(self, nb_classes=5, n_channels=62, n_samples=800, dropoutRate=0.5, kernLength=64, F1=8, heads=8, D=2, F2=16):
+    def __init__(self, nb_classes=5, n_channels=62, n_samples=2400, dropoutRate=0.5, kernLength=14, F1=16, heads=8, D=4, F2=64):
         super(ERTNet, self).__init__()
         self.conv1 = nn.Conv1d(n_channels, F1, kernLength, padding=kernLength // 2, bias=False)
         self.bn1 = nn.BatchNorm1d(F1)
@@ -45,18 +55,18 @@ class ERTNet(nn.Module):
         self.avg_pool = nn.AvgPool1d(4)
         self.dropout1 = nn.Dropout(dropoutRate)
         
-        self.sep_conv = nn.Conv1d(F1 * D, F2, 16, padding=16 // 2, bias=False)
+        self.sep_conv = nn.Conv1d(F1 * D, F2, kernel_size=1, padding=0, bias=False)
         self.bn3 = nn.BatchNorm1d(F2)
 
-        self.pos_encoder = PositionalEncoding(F2)
-        self.transformer = TransformerBlock(F2, heads, dropoutRate)
+        self.pos_encoder = PositionalEncoding(F2, n_samples//4)
+        self.transformer = TransformerBlock(F2, heads, dim_feedforward=256, dropout=dropoutRate)
         
         self.global_avg_pool = nn.AdaptiveAvgPool1d(1)
         self.dropout2 = nn.Dropout(dropoutRate)
         self.dense = nn.Linear(F2, nb_classes)
 
     def forward(self, x):
-        # x shape: (batch_size, seq_length, features)
+        # Input x shape: (batch_size, seq_length, features)
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.depthwise_conv(x)
@@ -68,16 +78,13 @@ class ERTNet(nn.Module):
         x = self.sep_conv(x)
         x = self.bn3(x)
         x = self.activation(x)
-        
-        x = x.transpose(1, 2)  # Change to (batch_size, seq_length, features)
-        
+                
         x = self.pos_encoder(x)
-        x = x.transpose(0, 1)  # Change to (seq_length, batch_size, features)
         x = self.transformer(x)
-        x = x.transpose(0, 1)  # Change back to (batch_size, seq_length, features)
         
-        x = x.transpose(1, 2)  # Change to (batch_size, features, seq_length)
-        x = self.global_avg_pool(x).squeeze(2)
+        x = self.global_avg_pool(x)
+        x = torch.flatten(x, start_dim=1)  # (256, 64)
+
         x = self.dropout2(x)
         x = self.dense(x)
         return x

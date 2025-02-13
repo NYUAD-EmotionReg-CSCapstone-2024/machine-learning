@@ -6,6 +6,11 @@ from utils.factory import BaseFactory
 from .ATCNet import ATCNet
 from .ERTNet import ERTNet
 from .ConvTrans import ConvTransformer
+from .EEGNet import EEGNet
+from .ShallowNet import ShallowConvNet
+from .CNN_BiLSTM import CNN_BiLSTM
+from .GRUNet import GRUNet
+from .DeepConvNet import DeepConvNet
 
 class ModelFactory(BaseFactory):
     REGISTRY = {
@@ -19,8 +24,28 @@ class ModelFactory(BaseFactory):
         },
         "conv_transformer": {
             "model": ConvTransformer,
-            "mandatory_params": ["n_classes", "n_channels", "n_heads", "n_layers"],
-        }
+            "mandatory_params": ["n_channels", "n_heads", "n_layers"],
+        },
+        "eegnet": {
+            "model": EEGNet,
+            "mandatory_params": ["n_channels", "kernLength", "F1", "F2", "D"],
+        },
+        "shallownet": {
+            "model": ShallowConvNet,
+            "mandatory_params": ["n_channels", "dropoutRate"],
+        },
+        "cnn_bilstm": {
+            "model": CNN_BiLSTM,
+            "mandatory_params": ["n_channels", "kernLength", "F1", "num_lstm", "F2", "D", "dropoutRate"],
+        },
+        "grunet": {
+            "model": GRUNet,
+            "mandatory_params": ["dropoutRate", "L1", "L2"],
+        },
+        "deepconvnet": {
+            "model": DeepConvNet,
+            "mandatory_params": ["n_channels", "dropoutRate"],
+        },
     }
     ITEM_KEY = "model"
 
