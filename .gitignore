@@ -16,3 +16,8 @@ hpc/
 # Config files
 config/*.yaml
 config/**/*.yaml
+
+# zip file and data file
+*.zip
+EEGPT/
+DEAP/
