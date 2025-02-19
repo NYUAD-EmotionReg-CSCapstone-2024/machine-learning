@@ -112,6 +112,7 @@ class Trainer(ABC):
 
     def _train_epoch(self):
         """Train the model for one epoch."""
+        self.model.train()
         running_loss = 0.0
         with tqdm(total=len(self.train_loader), desc="Training Iterations", leave=False) as pbar:
             for idx, (data, labels) in enumerate(self.train_loader):
