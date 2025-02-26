@@ -278,7 +278,7 @@ class EEGTransformer(nn.Module):
 		patch_size=32*2,
 		patch_stride=32,
 		embed_num=4,
-		embed_dim=512,
+		embed_dim=64,
 		depth=8,
 		num_heads=8,
 		mlp_ratio=4.0,
@@ -289,7 +289,6 @@ class EEGTransformer(nn.Module):
 		norm_layer=nn.LayerNorm,
 		patch_module=PatchEmbed,  # PatchNormEmbed
 		init_std=0.02,
-		interpolate_factor=2.,
 		return_attention_layer=-1,
 		**kwargs
 	):
@@ -393,51 +392,54 @@ class EEGTransformer(nn.Module):
 		x = x.reshape((B, N, self.embed_num, -1))
 		return x
 
-
-class EEGPTCausal(nn.Module):
-
-	def __init__(self, ckpt_path, window, freq, patch_size, patch_stride, embed_num=4, embed_dim=512, num_classes=5):
+class EEGPTEncoder(nn.Module):
+	def __init__(
+		self, 
+		ckpt_path, 
+		window=4, 
+		freq=256, 
+		patch_size=64, 
+		patch_stride=32, 
+		embed_num=4, 
+		embed_dim=512
+	):
 		super().__init__()
-		self.channels_to_keep = [
-			(k, ch) for k, ch in enumerate(SEEDV_CHANNELS) if ch in CHANNEL_DICT
-		]
+
+		self.channels_to_keep = [(i, ch) for i, ch in enumerate(SEEDV_CHANNELS) if ch in CHANNEL_DICT]
 		self.chan_ids = torch.tensor([CHANNEL_DICT[ch] for _, ch in self.channels_to_keep])
-		self.keep_indices = torch.tensor([k for k, _ in self.channels_to_keep])
-		self.encoder = EEGTransformer(
-			img_size=(len(self.keep_indices), window * freq),
+		self.keep_indices = torch.tensor([i for i, _ in self.channels_to_keep])
+
+		self.eegpt = EEGTransformer(
+			img_size=(len(self.channels_to_keep), window * freq),
 			patch_size=patch_size,
 			patch_stride=patch_stride,
 			embed_num=embed_num,
-			embed_dim=embed_dim
+			embed_dim=embed_dim,
 		)
-		self._load_encoder(ckpt_path)
-		head_input_dim = self.encoder.num_patches[1] * embed_num * embed_dim
-		self.head = nn.Linear(head_input_dim, num_classes)
+		self._load_weights(ckpt_path)
+		
+		self.out_shape = (self.eegpt.num_patches[1] * embed_num, embed_dim)
 
-	def _load_encoder(self, ckpt_path):
-		pretrain_ckpt = torch.load(ckpt_path)
+	def _load_weights(self, ckpt_path):
+		ckpt = torch.load(ckpt_path)
 		encoder_stat = {}
-		for k, v in pretrain_ckpt['state_dict'].items():
+		for k, v in ckpt['state_dict'].items():
 			if k.startswith("target_encoder."):
 				encoder_stat[k[15:]] = v
-		self.encoder.load_state_dict(encoder_stat)
-
+		self.eegpt.load_state_dict(encoder_stat)
+	
 	def forward(self, x):
-		x = x[:, self.keep_indices, :] # ignore channels not supported by eegpt
-		x = self.encoder(x, self.chan_ids)
-		x = x.reshape((x.shape[0], -1))
-		x = self.head(x)
+		x = x[:, self.keep_indices, :]
+		x = self.eegpt(x, self.chan_ids)
 		return x
-
+	
 if __name__ == "__main__":
-	model = EEGPTCausal(
+
+	encoder = EEGPTEncoder(
 		ckpt_path="./EEGPT/checkpoint/eegpt_mcae_58chs_4s_large4E.ckpt",
-		window=4,
-		freq=256,
-		patch_size=64,
-		patch_stride=32,
 	)
 
-	x = torch.randn((1, 62, 1024))
-	y = model(x)
-	print(y.shape)
+	x = torch.randn(16, 62, 1024)
+	x = encoder(x)
+	x = x.reshape((16, -1, x.shape[-1]))
+	print(x.shape)

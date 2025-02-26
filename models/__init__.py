@@ -1,25 +1,8 @@
-from .ATCNet import ATCNet
-from .ERTNet import ERTNet
-from .ConvTrans import ConvTransformer
-from .EEGNet import EEGNet
-from .CNN_BiLSTM import CNN_BiLSTM
-from .DeepConvNet import DeepConvNet
-from .ShallowNet import ShallowConvNet
-from .GRUNet import GRUNet
-from .EEGPTCausal import EEGPTCausal
-from .factory import ModelFactory, OptimizerFactory, SchedulerFactory
+from .factory import ModelFactory, OptimizerFactory, SchedulerFactory, EncoderFactory
 
 __all__ = [
-    'ATCNet',
-    'ERTNet',
-    'ConvTransformer',
-    'EEGNet',
-    'CNN_BiLSTM',
-    'DeepConvNet',
-    'ShallowConvNet',
-    'GRUNet',
-    'EEGPTCausal',
     'ModelFactory',
     'OptimizerFactory',
-    'SchedulerFactory'
+    'SchedulerFactory',
+    'EncoderFactory'
 ]
