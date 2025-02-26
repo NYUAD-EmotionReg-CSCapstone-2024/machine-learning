@@ -7,7 +7,7 @@ class DatasetFactory(BaseFactory):
     REGISTRY = {
         "seedv": {
             "dataset": SeedVDataset,
-            "mandatory_params": ["root_dir", "h5file"],
+            "mandatory_params": ["root_dir", "h5file", "device"],
             "optional_params": ["transform", "participants", "sessions", "emotions", "channels", "load"]
         }
     }

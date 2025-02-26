@@ -89,7 +89,8 @@ def main(args):
     device = torch.device(config["device"])
     
     dataset = DatasetFactory.create(
-        config["dataset"]["name"], 
+        config["dataset"]["name"],
+        device=device,
         **config["dataset"]["params"], 
         load=args.load
     )
