@@ -112,11 +112,11 @@ class EncoderFactory(BaseFactory):
             def _get_connector(self):
                 out_shape = self.encoder.out_shape
                 out_dim = out_shape[0] * out_shape[1]
-                in_shape = 8 * 60
-                if isinstance(in_shape, int):
+                in_shape = kwargs.get("classifier_input_shape")
+                if len(in_shape) == 1:
                     return torch.nn.Sequential(
                         torch.nn.Flatten(),
-                        torch.nn.Linear(out_dim, in_shape),
+                        torch.nn.Linear(out_dim, in_shape[0]),
                         torch.nn.ReLU()
                     )
                 elif len(in_shape) == 2:

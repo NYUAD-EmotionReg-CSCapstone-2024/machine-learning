@@ -287,10 +287,9 @@ class EEGTransformer(nn.Module):
 		attn_drop_rate=0.0,
 		drop_path_rate=0.0,
 		norm_layer=nn.LayerNorm,
-		patch_module=PatchEmbed,  # PatchNormEmbed
+		patch_module=PatchEmbed,
 		init_std=0.02,
 		return_attention_layer=-1,
-		**kwargs
 	):
 		super().__init__()
 		self.num_features = self.embed_dim = embed_dim
@@ -417,7 +416,7 @@ class EEGPTEncoder(nn.Module):
 			embed_dim=embed_dim,
 		)
 		self._load_weights(ckpt_path)
-		
+
 		self.out_shape = (self.eegpt.num_patches[1] * embed_num, embed_dim)
 
 	def _load_weights(self, ckpt_path):
