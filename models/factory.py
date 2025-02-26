@@ -7,7 +7,7 @@ from .ATCNet import ATCNet
 from .ERTNet import ERTNet
 from .ConvTrans import ConvTransformer
 from .EEGNet import EEGNet
-from .encoder import FoundationClassifier
+from .EEGPTCausal import EEGPTCausal
 from .ShallowNet import ShallowConvNet
 from .CNN_BiLSTM import CNN_BiLSTM
 from .GRUNet import GRUNet
@@ -48,8 +48,9 @@ class ModelFactory(BaseFactory):
             "mandatory_params": ["n_channels", "dropoutRate"],
         },
         "eegpt": {
-            "model": FoundationClassifier,
-            "mandatory_params": ["num_classes", "n_channels"],
+            "model": EEGPTCausal,
+            "mandatory_params": ["ckpt_path", "window", "freq", "patch_size", "patch_stride"],
+            "optional_params": ["embed_num", "embed_dim", "num_classes"]
         }
     }
     ITEM_KEY = "model"

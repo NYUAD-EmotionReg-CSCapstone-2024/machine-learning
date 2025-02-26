@@ -6,6 +6,7 @@ from .CNN_BiLSTM import CNN_BiLSTM
 from .DeepConvNet import DeepConvNet
 from .ShallowNet import ShallowConvNet
 from .GRUNet import GRUNet
+from .EEGPTCausal import EEGPTCausal
 from .factory import ModelFactory, OptimizerFactory, SchedulerFactory
 
 __all__ = [
@@ -17,6 +18,7 @@ __all__ = [
     'DeepConvNet',
     'ShallowConvNet',
     'GRUNet',
+    'EEGPTCausal',
     'ModelFactory',
     'OptimizerFactory',
     'SchedulerFactory'
