@@ -20,7 +20,7 @@ _emotions = [str(emotion) for emotion in range(_total_emotions)]
 _channels = [str(key) for key in channel_mappings.keys()]
 
 class SeedVDataset(Dataset):
-    def __init__(self, root_dir, h5file, transform=None, participants=_participants, sessions=_sessions, emotions=_emotions, channels=_channels, load=False):
+    def __init__(self, root_dir, h5file, device, transform=None, participants=_participants, sessions=_sessions, emotions=_emotions, channels=_channels, load=False):
         '''
         root_dir: str
             Path to the root directory containing the dataset
@@ -42,6 +42,8 @@ class SeedVDataset(Dataset):
         '''
         self.root_dir = root_dir
         self.h5file = h5.File(os.path.join(root_dir, h5file), "r")
+        self.device = device
+
         self.transform = transform
         self.data_ids = []
 
@@ -69,8 +71,8 @@ class SeedVDataset(Dataset):
             if str(pid) not in self.h5file:
                 raise ValueError(f"Participant {pid} not found in the dataset.")
             for sid in self.sessions:
-                if str(sid) not in self.h5file[str(pid)]:
-                    raise ValueError(f"Session {sid} not found for participant {pid}.")
+                if str(pid) == "7" and str(sid) == "1":
+                    continue
                 for emotion in self.emotions:
                     if str(emotion) not in self.h5file[str(pid)][str(sid)]:
                         continue
@@ -83,10 +85,11 @@ class SeedVDataset(Dataset):
         """Collect data_ids"""
         for pid in self.participants:
             for sid in self.sessions:
+                if str(pid) == "7" and str(sid) == "1":
+                    continue
                 for emotion in self.emotions:
                     if str(emotion) not in self.h5file[str(pid)][str(sid)]:
                         continue
-                    
                     data_ids = list(self.h5file[str(pid)][str(sid)][str(emotion)].keys())
                     self.data_ids.extend(data_ids)
 
@@ -100,8 +103,8 @@ class SeedVDataset(Dataset):
             pid, sid, emotion, _ = data_id.split("_")
             chunk = self.h5file[pid][sid][emotion][data_id][()]
             chunk = chunk[self.channel_ids]
-            self.data.append(chunk)
-            self.labels.append(int(emotion))
+            self.data.append(torch.tensor(chunk, dtype=torch.float32).to(self.device))
+            self.labels.append(torch.tensor(int(emotion), dtype=torch.long).to(self.device))
 
     def __len__(self):
         return len(self.data_ids)

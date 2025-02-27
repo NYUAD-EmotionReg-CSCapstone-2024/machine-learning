@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from datasets import DatasetFactory, SplitterFactory
-from models import ModelFactory, OptimizerFactory, SchedulerFactory
+from models import ModelFactory, OptimizerFactory, SchedulerFactory, EncoderFactory
 from trainers import Trainer
 import warnings
 
@@ -25,6 +25,14 @@ def create_trainer(config, splitter, device, fold_idx=None):
         config["model"]["name"], 
         **config["model"]["params"]
     ).to(device)
+
+    use_config = config.get("model", {}).get("encoder", None)
+    if use_config:
+        model = EncoderFactory.wrap(
+            use_config["name"], 
+            model, 
+            **use_config.get("params", {})
+        ).to(device)
 
     optimizer = OptimizerFactory.create(
         config["optimizer"]["name"], 
@@ -81,7 +89,8 @@ def main(args):
     device = torch.device(config["device"])
     
     dataset = DatasetFactory.create(
-        config["dataset"]["name"], 
+        config["dataset"]["name"],
+        device=device,
         **config["dataset"]["params"], 
         load=args.load
     )
