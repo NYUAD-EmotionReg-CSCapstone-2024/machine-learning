@@ -431,14 +431,3 @@ class EEGPTEncoder(nn.Module):
 		x = x[:, self.keep_indices, :]
 		x = self.eegpt(x, self.chan_ids)
 		return x
-	
-if __name__ == "__main__":
-
-	encoder = EEGPTEncoder(
-		ckpt_path="./EEGPT/checkpoint/eegpt_mcae_58chs_4s_large4E.ckpt",
-	)
-
-	x = torch.randn(16, 62, 1024)
-	x = encoder(x)
-	x = x.reshape((16, -1, x.shape[-1]))
-	print(x.shape)

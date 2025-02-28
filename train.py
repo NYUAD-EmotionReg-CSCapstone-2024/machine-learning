@@ -4,8 +4,7 @@ import argparse
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from datasets import DatasetFactory, SplitterFactory
-from models import ModelFactory, OptimizerFactory, SchedulerFactory, EncoderFactory
+from factories import ModelFactory, EncoderFactory, OptimizerFactory, SchedulerFactory, DatasetFactory, SplitterFactory
 from trainers import Trainer
 import warnings
 

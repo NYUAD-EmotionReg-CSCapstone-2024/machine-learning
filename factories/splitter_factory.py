@@ -1,17 +1,5 @@
-from utils.factory import BaseFactory
-
-from .seedv import SeedVDataset
-from .splitters import RandomSplitter, LNSOSplitter, KFoldSplitter
-
-class DatasetFactory(BaseFactory):
-    REGISTRY = {
-        "seedv": {
-            "dataset": SeedVDataset,
-            "mandatory_params": ["root_dir", "h5file", "device"],
-            "optional_params": ["transform", "participants", "sessions", "emotions", "channels", "load"]
-        }
-    }
-    ITEM_KEY = "dataset"
+from datasets.splitters import RandomSplitter, LNSOSplitter, KFoldSplitter
+from .base_factory import BaseFactory
 
 class SplitterFactory(BaseFactory):
     REGISTRY = {
