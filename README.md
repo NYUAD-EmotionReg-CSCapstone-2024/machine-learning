@@ -6,21 +6,21 @@ This repository handles the development of the machine learning model for the ca
 
 ### To build the dataset
 
-Create a build config file inside `config/builds` named `set_{uniq_num}.yaml` with the following:
+Create a build config file inside `config/builds` named `{build_name}.yaml` with the following:
 
 ```yaml
 root_dir: "/data/SEED-V"              # Raw EEG Dataset Location
 dataset: "seedv"                      # Type of dataset
 outfile: "seedv4s0o"                  # Dataset outfile name
 chunk_duration: 4                     # EEG Window duration length
-overlap: 0.5                          # Chunk window overlap ratio
+overlap: 0                            # Chunk window overlap ratio
 
 # Optional preprocessing
 notch_freq: 50
 bandpass_freqs:
   - 1
   - 50
-resample_freq: 200
+resample_freq: 256
 normalize: True
 ```
 
@@ -36,7 +36,7 @@ python build.py --config set_00 --overwrite
 
 ### To train the model
 
-Create a train config file inside `config/experiments` named `exp_{uniq_num}.yaml` with:
+Create a train config file inside `config/experiments` named `{exp_name}.yaml` with:
 
 ```yaml
 # Experiment configuration
@@ -57,6 +57,12 @@ dataset:
 # Model configuration
 model:
   name: "atcnet"                      # Name of the model
+  enocder:                              # Encoder head from Universal LEMs (optional)
+  name: "eegpt"                         # Name of LEM with (pre-trained weights file path)
+  params: 
+    ckpt_path: "C:\\Users\\adi\\Documents\\EEGPT\\checkpoint\\eegpt_mcae_58chs_4s_large4E.ckpt"
+    freeze: True                        # Freezes weights or not
+    classifier_input_shape: [62, 2400]  # Input shape for the classifier   
   params:                             # Look in factory for model params
     n_chans: 62                        
     n_classes: 5
