@@ -4,14 +4,32 @@ import argparse
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from datasets import DatasetFactory, SplitterFactory
-from models import ModelFactory, OptimizerFactory, SchedulerFactory, EncoderFactory
+import subprocess
+import time
+from factories import ModelFactory, EncoderFactory, OptimizerFactory, SchedulerFactory, DatasetFactory, SplitterFactory
 from trainers import Trainer
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning, module="torch.nn.modules.conv")
 
 loss_fn = nn.CrossEntropyLoss()
+
+def launch_tensorboard(log_dir):
+    """Launch TensorBoard as a background process and open it in a web browser."""
+    print(f"Starting TensorBoard from {log_dir}")
+    try:
+        # Use --logdir_spec to provide better naming for runs
+        parent_dir = os.path.dirname(log_dir)
+        
+        tensorboard_process = subprocess.Popen(
+            ["tensorboard", "--logdir", parent_dir], 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE
+        )
+        return tensorboard_process
+    except Exception as e:
+        print(f"Failed to start TensorBoard: {e}")
+        return None
 
 def create_trainer(config, splitter, device, fold_idx=None):
     """Creates and returns a trainer for a given dataset split and configuration."""
@@ -101,6 +119,18 @@ def main(args):
         **config["splitter"]["params"]
     )
 
+    # Launch TensorBoard if requested
+    tensorboard_process = None
+    if args.board:
+        # Point TensorBoard to the experiment root directory 
+        # instead of a specific run's tensorboard dir
+        # This allows TensorBoard to show all runs with proper names
+        tensorboard_dir = config["exp_dir"]
+        tensorboard_process = launch_tensorboard(tensorboard_dir)
+        if tensorboard_process:
+            print("TensorBoard running at http://localhost:6006")
+            print(f"Experiment directory: {tensorboard_dir}")
+
     # Handle K-Fold Cross-Validation
     if config["splitter"]["name"] == "kfold":
         num_folds = config["splitter"]["params"]["k"]
@@ -132,11 +162,23 @@ def main(args):
             patience=config["patience"], 
             resume=args.resume
         )
+    
+    # Keep TensorBoard running until user manually closes it
+    if tensorboard_process:
+        try:
+            print("TensorBoard is running. Press Ctrl+C to exit.")
+            tensorboard_process.wait()
+        except KeyboardInterrupt:
+            print("Terminating TensorBoard...")
+            tensorboard_process.terminate()
+            tensorboard_process.wait()
+            print("TensorBoard terminated.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a model on the SEED-V dataset")
     parser.add_argument("--config", type=str, required=True, help="Path to the configuration file (without .yaml extension)")
     parser.add_argument("--load", action="store_true", help="Load the dataset in memory for faster training")
     parser.add_argument("--resume", action="store_true", help="Resume training from the latest checkpoint")
+    parser.add_argument("--board", action="store_true", help="Launch TensorBoard server to monitor training")
     args = parser.parse_args()
     main(args)
