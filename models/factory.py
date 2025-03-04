@@ -1,10 +1,12 @@
 import torch
-from torch.optim import lr_scheduler 
+from torch.optim import lr_scheduler
 
 from utils.factory import BaseFactory
 
 from .atcnet import ATCNet
 from .ERTNet import ERTNet
+from .conformer import Conformer
+from .conformer_downsized import DownsizedConformer  # <--- new import
 
 class ModelFactory(BaseFactory):
     REGISTRY = {
@@ -15,6 +17,22 @@ class ModelFactory(BaseFactory):
         "ertnet": {
             "model": ERTNet,
             "mandatory_params": [],
+        },
+        "conformer": {
+            "model": Conformer,
+            "mandatory_params": ["emb_size", "depth", "n_classes"],
+            "optional_params": [
+                "num_heads", "ff_expansion_factor", "conv_kernel_size",
+                "embed_dropout", "block_dropout"
+            ]
+        },
+        "downsized_conformer": {
+            "model": DownsizedConformer,
+            "mandatory_params": ["emb_size", "depth", "n_classes"],
+            "optional_params": [
+                "num_heads", "ff_expansion_factor", "conv_kernel_size",
+                "embed_dropout", "block_dropout"
+            ]
         }
     }
     ITEM_KEY = "model"
