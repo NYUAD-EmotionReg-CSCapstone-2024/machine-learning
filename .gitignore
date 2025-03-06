@@ -10,7 +10,8 @@ venv/
 
 # Experiment logs/models
 experiments/
-builds/
+config/interface/
+config/builds/
 hpc/
 
 # Config files

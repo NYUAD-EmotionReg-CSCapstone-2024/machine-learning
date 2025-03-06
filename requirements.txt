@@ -45,6 +45,7 @@ pooch==1.8.2
 protobuf==5.28.3
 pyparsing==3.2.0
 python-dateutil==2.9.0.post0
+pylsl==1.17.6
 pytz==2024.2
 PyYAML==6.0.2
 requests==2.32.3

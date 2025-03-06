@@ -12,7 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 
 class Trainer(ABC):
-    def __init__(self, train_loader, val_loader, model, loss_fn, optimizer, device, exp_dir, run_name=None):
+    def __init__(self, train_loader, val_loader, model, loss_fn, optimizer, device, exp_dir, model_filename, run_name=None):
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.model = model
@@ -20,6 +20,7 @@ class Trainer(ABC):
         self.optimizer = optimizer
         self.scheduler = None
         self.exp_dir = exp_dir
+        self.model_filename = model_filename
         self.device = device
 
         # Set run name with proper format for regex searching
@@ -362,7 +363,7 @@ class Trainer(ABC):
                 if len(np.unique(all_labels)) <= 20:  # Limit to avoid huge matrices
                     try:
                         from sklearn.metrics import confusion_matrix
-                        import seaborn as sns
+                        import seaborn as sns # type: ignore
                         
                         cm = confusion_matrix(all_labels, all_preds)
                         fig, ax = plt.subplots(figsize=(10, 8))
@@ -410,9 +411,14 @@ class Trainer(ABC):
 
         # Final checkpoint if training ends without early stopping
         if val_loss and val_loss < self.metrics["best_val_loss"]:
-            final_checkpoint_path = os.path.join(self.checkpoint_dir, f"final_checkpoint.pth")
+            final_checkpoint_path = os.path.join(self.checkpoint_dir, "final_checkpoint.pth")
             self._save_checkpoint(epoch, final_checkpoint_path)
             self.logger.info(f"Training complete. Final model saved to {final_checkpoint_path}")
+            
+        # Save the final trained model in the exp_dir path
+        final_model_path = os.path.join(self.exp_dir, self.model_filename)
+        torch.save(self.model.state_dict(), final_model_path)
+        self.logger.info(f"Final trained model saved at: {final_model_path}")
 
         # Plot metrics
         self._plot_metrics(eval_every)

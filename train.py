@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import subprocess
-import time
 from factories import ModelFactory, EncoderFactory, OptimizerFactory, SchedulerFactory, DatasetFactory, SplitterFactory
 from trainers import Trainer
 import warnings
@@ -66,6 +65,15 @@ def create_trainer(config, splitter, device, fold_idx=None):
 
     exp_dir = os.path.join(config["exp_dir"], f"{args.config}_fold{fold_idx}" if fold_idx is not None else args.config)
 
+    model_name = config["model"]["name"]
+    encoder_config = config["model"].get("encoder", None)
+    encoder_name = encoder_config["name"] if encoder_config else None
+
+    if encoder_name:
+        model_filename = f"{encoder_name}_{model_name}_trained_model.pth"
+    else:
+        model_filename = f"{model_name}_trained_model.pth"
+
     trainer = Trainer(
         train_loader=train_loader,
         val_loader=test_loader,
@@ -74,6 +82,7 @@ def create_trainer(config, splitter, device, fold_idx=None):
         optimizer=optimizer,
         device=device,
         exp_dir=exp_dir,
+        model_filename=model_filename
     )
 
     if scheduler:

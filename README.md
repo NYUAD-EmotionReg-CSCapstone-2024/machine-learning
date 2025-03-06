@@ -1,14 +1,23 @@
-# Datasets and Models
+# NYUAD Emotion Regulation Capstone - Deep Learning Component
 
-This repository handles the development of the machine learning model for the capstone research.
+This repository handles the development of the machine learning model pipeline for our capstone research on emotion regulation
 
-## Supported Datasets: `SEED-V`
+### Supported Datasets: `SEED-V`
 
-### To build the dataset
+# Setup: 
 
-Create a build config file inside `config/builds` named `{build_name}.yaml` with the following:
+For our setup, you will need to create a new directory known as `./config`. In this folder, we will place all the necessary configurations for all the steps required for the setup of our pipeline. 
+
+## 1. Builds
+
+Builds are used to create a dataset build which have been preprocessed and are optimized for training the models. 
+
+- To create a build config file, you must create a new directory inside the `./config` folder called `config/builds`. 
+
+- Then you can name your build file however you like: `{build_name}.yaml` with the following parameters:
 
 ```yaml
+# Build Configuration Settings: 
 root_dir: "/data/SEED-V"              # Raw EEG Dataset Location
 dataset: "seedv"                      # Type of dataset
 outfile: "seedv4s0o"                  # Dataset outfile name
@@ -24,22 +33,28 @@ resample_freq: 256
 normalize: True
 ```
 
-You can then run: 
+> Note: Please refer to the dataset factory to see what values you can use for exploration under `./factories`
+
+You can then execute the build by running: 
 ```
 python build.py --config {config_file_name} --overwrite {True/False}
 ```
 
 For example: 
 ```
-python build.py --config set_00 --overwrite
+python build.py --config build_00 --overwrite
 ```
 
-### To train the model
+## 2. Training
 
-Create a train config file inside `config/experiments` named `{exp_name}.yaml` with:
+Training is the main component to which we can specify which model we want to train based on the build we have created.
+
+- To start training you must create a new directory inside the `./config` folder called `config/experiments`. 
+
+- Then you can name your train file however you like: `{exp_name}.yaml` with the following parameters:
 
 ```yaml
-# Experiment configuration
+# Experiment Configuration Settings: 
 exp_dir: "./experiments"
 device: "cuda:0"
 
@@ -60,7 +75,7 @@ model:
   enocder:                              # Encoder head from Universal LEMs (optional)
   name: "eegpt"                         # Name of LEM with (pre-trained weights file path)
   params: 
-    ckpt_path: "C:\\Users\\adi\\Documents\\EEGPT\\checkpoint\\eegpt_mcae_58chs_4s_large4E.ckpt"
+    ckpt_path: ./EEGPT/checkpoint/eegpt_mcae_58chs_4s_large4E.ckpt
     freeze: True                        # Freezes weights or not
     classifier_input_shape: [62, 2400]  # Input shape for the classifier   
   params:                             # Look in factory for model params
@@ -98,7 +113,9 @@ eval_every: 5                         # Validation Results every n epoch
 patience: 10                          # No. of epochs before early stop
 ```
 
-You can then run: 
+> Note: Please refer to the model, encoder, optimizer, scheduler and splitter factories to see what values you can use for exploration under `./factories`
+
+You can then execute the training by running the command: 
 ```
 python train.py --config {config_file_name} --load {True/False} --resume {True/False}
 ```
@@ -108,14 +125,42 @@ For example:
 python train.py --config exp_00 --load --resume
 ```
 
-# Training Logs and Checkpoints
+## 3. Interface
 
+The interface is what connects the model with the real-time EEG data collection headset from X.on. This section is all about collecting the data in real time and feeding it into the model for a prediction inference. 
+
+- To start the interface you must create a new directory inside the `./config` folder called `config/interface`. 
+
+- Then you can name your train file however you like: `{int_name}.yaml` with the following parameters:
+
+```yaml
+# Interface Configuration Settings: 
+model_filepath: "./experiments/eegpt/eegpt_atcnet_trained_model.pth"
+window_size: 4                
+sample_frequency: 256         
+polling_frequency: 0.01       
+``` 
+
+You can then execute the training by running the command: 
+```
+python interface.py --config {config_file_name}
+```
+
+For example: 
+```
+python interface.py --config int_00
+```
+
+# Training Logs and Checkpoints
 ## Directory Structure
 
-- `experiments/exp_{uniq_num}/`: Contains logs, checkpoints, and metrics.
-  - `checkpoints/`: Contains saved model checkpoints (e.g., `model_epoch_{epoch_num}.pth`) and `latest_checkpoint.pth`.
+When executing a training, a new directory called `./experiments` will display at the repository level which will contain information such as logs, checkpoints, metrics, trained weights, etc. 
+
+- `experiments/{exp_name}/`:
+  - `checkpoints/`: Contains saved model checkpoints for resuming (e.g., `model_epoch_{epoch_num}.pth`) and `latest_checkpoint.pth`.
   - `train.log`: Logs with training details (e.g., loss, accuracy, training progress).
   - `metrics.png`: Plot showing training loss, validation loss, and accuracy.
+  - `{model_name}_trained_model.pth`: Trained weights of the final model 
 
 ## Checkpoints
 
@@ -148,28 +193,40 @@ experiments/
 │   │   ├── latest_checkpoint.pth
 │   ├── train.log
 │   ├── metrics.png
+│   ├── atcnet_trained_model.pth
 └── exp_2/
     ├── checkpoints/
     │   ├── model_epoch_5.pth
     │   ├── latest_checkpoint.pth
     ├── train.log
     ├── metrics.png
+    ├── ertnet_trained_model.pth
 ```
 
-## Using HPC
+## Training with NYUAD HPC
 
-Please make sure the latest repository is in your scratch/[NETID] folder. Once that is done follow these steps for the setup: 
+### Setup: 
 
-1. Make sure all the config/experiments you want to run are there
-2. Create an empty folder titled `logs` within the repository to see log outputs if needed
-3. Edit the script: `hpc/hpc_train.sh`
+1. Please make sure the latest repository is in your scratch/[NETID] folder. 
+2. Make sure all the `./config` files you want to run are there
+3. Create an empty folder titled `logs` within the repository to see log outputs
 
-In the `hpc/hpc_train.sh` script, look for the following values: 
-- `#SBATCH --array=0-6`: Please adjust how many jobs you would like to run simultaneously. In this example we are running 7 jobs (job 0 - job 6)
-- `config_files=("exp_01" "exp_01")`: Please the name of your config files here
-- Obviously change the directories to your NETID
+### Editing the HPC Scripts: 
 
-4. If the above is all ready, then in the terminal you can run: `sbatch hpc/hpc_train.sh` to execute the job.  
+We have a folder containing pre-made hpc scripts in `./hpc/`. In this folder you will find two main scripts which are `hpc_build.sh` and `hpc_train.sh`
+
+The build script is used for building the datasets and the train script is for training the models. Both of which have a similar structure.
+
+To edit the scripts to your desire, make sure to change the following: 
+
+1. Make sure the paths include your `NETID`
+
+2. `#SBATCH --array=0-6`: Please adjust how many jobs you would like to run simultaneously. In this example we are running 7 jobs (job 0 - job 6)
+
+3. `config_files=("exp_00" "exp_01" "exp_02")`: Please the name of your config files here
+
+### Executing the script:
+If the above is all ready, then in HPC terminal you can run: `sbatch hpc/hpc_train.sh` to execute the job.  
 
 
 
