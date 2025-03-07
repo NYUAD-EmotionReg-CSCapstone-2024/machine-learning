@@ -148,6 +148,20 @@ class Trainer(ABC):
         torch.save(checkpoint_data, checkpoint_path)
         self.logger.debug(f"Checkpoint saved to {checkpoint_path}")
 
+    def _save_full_model(self, model_path=None):
+        """Save the entire model (not just state_dict) for easy deployment"""
+        if model_path is None:
+            model_path = os.path.join(self.exp_dir, self.model_filename)
+        
+        # Set model to eval mode before saving
+        self.model.eval()
+        
+        # Save the complete model
+        torch.save(self.model, model_path)
+        self.logger.info(f"Full model saved to {model_path}")
+        
+        return model_path
+
     def _evaluate(self):
         """Evaluate model performance on the validation set."""
         self.model.eval()
@@ -415,14 +429,13 @@ class Trainer(ABC):
             self._save_checkpoint(epoch, final_checkpoint_path)
             self.logger.info(f"Training complete. Final model saved to {final_checkpoint_path}")
             
-        # Save the final trained model in the exp_dir path
-        final_model_path = os.path.join(self.exp_dir, self.model_filename)
-        torch.save(self.model.state_dict(), final_model_path)
-        self.logger.info(f"Final trained model saved at: {final_model_path}")
-
         # Plot metrics
         self._plot_metrics(eval_every)
-        
+
+        # Save the full model
+        saved_model_path = self._save_full_model()
+        self.logger.info(f"Saved full model to {saved_model_path}")
+                
         total_time = datetime.now() - start_time
         self.logger.info(f"\nTraining completed successfully in {total_time}")
         self.logger.info(f"Best validation loss: {self.metrics['best_val_loss']:.4f}, "

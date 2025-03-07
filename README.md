@@ -72,7 +72,7 @@ dataset:
 # Model configuration
 model:
   name: "atcnet"                      # Name of the model
-  enocder:                              # Encoder head from Universal LEMs (optional)
+  encoder:                              # Encoder head from Universal LEMs (optional)
   name: "eegpt"                         # Name of LEM with (pre-trained weights file path)
   params: 
     ckpt_path: ./EEGPT/checkpoint/eegpt_mcae_58chs_4s_large4E.ckpt

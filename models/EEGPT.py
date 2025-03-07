@@ -1,6 +1,8 @@
 import math
 import torch
 import torch.nn as nn
+import warnings
+warnings.filterwarnings("ignore", message="You are using `torch.load` with `weights_only=False`")
 
 CHANNEL_DICT = {
 	k.upper(): v
