@@ -31,6 +31,12 @@ SEEDV_CHANNELS = [
     'CB1', 'O1', 'OZ', 'O2', 'CB2'
 ]
 
+XON_CHANNELS = [
+	'F3', 'F4',
+	'C3', 'CZ', 'C4',
+	'P3', 'P4'
+]
+
 
 def _no_grad_trunc_normal_(tensor, mean, std, a, b):
 	# Cut & paste from PyTorch official master until it's in a few official releases - RW
