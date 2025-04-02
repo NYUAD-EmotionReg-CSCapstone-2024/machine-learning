@@ -1,6 +1,6 @@
 from .base_factory import BaseFactory
 
-from models import ATCNet, ERTNet, ConvTransformer, EEGNet, MLP, ShallowConvNet, CNN_BiLSTM, GRUNet, DeepConvNet
+from models import ATCNet, ERTNet, ConvTransformer, EEGNet, MLP, ShallowConvNet, CNN_BiLSTM, GRUNet, DeepConvNet, ModifiedATCNet
 
 class ModelFactory(BaseFactory):
     REGISTRY = {
@@ -39,6 +39,10 @@ class ModelFactory(BaseFactory):
         "mlp": {
             "model": MLP,
             "mandatory_params": ["n_classes", "n_channels"],
+        },
+        "modified_atcnet": {
+            "model": ModifiedATCNet,
+            "mandatory_params": ["n_chans", "timestamps", "n_outputs"]
         }
     }
     ITEM_KEY = "model"

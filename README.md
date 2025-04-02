@@ -125,32 +125,6 @@ For example:
 python train.py --config exp_00 --load --resume
 ```
 
-## 3. Interface
-
-The interface is what connects the model with the real-time EEG data collection headset from X.on. This section is all about collecting the data in real time and feeding it into the model for a prediction inference. 
-
-- To start the interface you must create a new directory inside the `./config` folder called `config/interface`. 
-
-- Then you can name your train file however you like: `{int_name}.yaml` with the following parameters:
-
-```yaml
-# Interface Configuration Settings: 
-model_filepath: "./experiments/eegpt/eegpt_atcnet_trained_model.pth"
-window_size: 4                
-sample_frequency: 256         
-polling_frequency: 0.01       
-``` 
-
-You can then execute the training by running the command: 
-```
-python interface.py --config {config_file_name}
-```
-
-For example: 
-```
-python interface.py --config int_00
-```
-
 # Training Logs and Checkpoints
 ## Directory Structure
 

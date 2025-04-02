@@ -8,6 +8,7 @@ from .ERTNet import ERTNet
 from .GRUNet import GRUNet
 from .MLP import MLP
 from .ShallowNet import ShallowConvNet
+from .ModifiedATCNet import ModifiedATCNet
 
 __all__ = [
     "ATCNet",
@@ -19,5 +20,6 @@ __all__ = [
     "ERTNet",
     "GRUNet",
     "MLP",
-    "ShallowConvNet"
+    "ShallowConvNet",
+    "ModifiedATCNet"
 ]

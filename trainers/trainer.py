@@ -433,9 +433,8 @@ class Trainer(ABC):
         self._plot_metrics(eval_every)
 
         # Save the full model
-        saved_model_path = self._save_full_model()
-        self.logger.info(f"Saved full model to {saved_model_path}")
-                
+        self._save_full_model()
+                        
         total_time = datetime.now() - start_time
         self.logger.info(f"\nTraining completed successfully in {total_time}")
         self.logger.info(f"Best validation loss: {self.metrics['best_val_loss']:.4f}, "
