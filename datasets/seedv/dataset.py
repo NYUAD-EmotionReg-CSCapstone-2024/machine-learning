@@ -130,4 +130,10 @@ class SeedVDataset(Dataset):
         if self.transform:
             chunk = self.transform(chunk)
 
+        # Remap labels if we're not using all emotions
+        if len(self.emotions) < _total_emotions:
+        # Create a mapping from original emotion indices to new consecutive indices starting from 0
+            emotion_map = {int(e): i for i, e in enumerate(self.emotions)}
+            label = torch.tensor(emotion_map[label.item()], dtype=torch.long)
+
         return chunk, label
