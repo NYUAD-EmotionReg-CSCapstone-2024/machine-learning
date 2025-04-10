@@ -4,7 +4,7 @@ This repository handles the development of the machine learning model for the ca
 
 ## Supported Datasets: `SEED-V`
 
-### To build the dataset
+### To build the dataset:
 
 Create a build config file inside `config/builds` named `set_{uniq_num}.yaml` with the following:
 
