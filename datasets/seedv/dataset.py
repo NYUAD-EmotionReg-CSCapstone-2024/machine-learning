@@ -98,7 +98,7 @@ class SeedVDataset(Dataset):
         self.data = []
         self.labels = []
         for data_id in self.data_ids:
-            pid, sid, emotion, _ = data_id.split("_")
+            pid, sid, _, emotion, _ = data_id.split("_")
             chunk = self.h5file[pid][sid][emotion][data_id][()]
             chunk = chunk[self.channel_ids]
             self.data.append(torch.tensor(chunk, dtype=torch.float32).to(self.device))
@@ -114,7 +114,7 @@ class SeedVDataset(Dataset):
 
     def _get_from_h5(self, idx):
         data_id = self.data_ids[idx]
-        pid, sid, emotion, _ = data_id.split("_")
+        pid, sid, _, emotion, _ = data_id.split("_")
         chunk = self.h5file[pid][sid][emotion][data_id][()]
         chunk = chunk[self.channel_ids]
         chunk = torch.tensor(chunk, dtype=torch.float32)
