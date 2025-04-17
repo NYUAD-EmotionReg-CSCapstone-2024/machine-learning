@@ -15,6 +15,17 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 _channels_to_drop = ['M1', 'M2', 'VEO', 'HEO']
 _scores_file_path = os.path.join(os.path.dirname(__file__), "scores.csv")
 
+# Mapping 5 emotions to 3 categories
+# Left: 0 - disgust, 1 - fear, 2 - sad, 3 - neutral, 4 - happy
+# Right: 0 - negative, 1 - neutral, 2 - positive
+label_map = {
+    "0": "0",
+    "1": "0",
+    "2": "0",
+    "3": "1",
+    "4": "2"
+}
+
 class SeedVBuilder:
     '''
     Builder class for the SEED-V dataset. The dataset is built from the raw EEG data and the session labels.
@@ -44,14 +55,14 @@ class SeedVBuilder:
             self.scores_df = pd.read_csv(_scores_file_path)
         except Exception as e:
             raise RuntimeError(f"Error loading scores file: {e}")
-
+        
     def build(
             self, 
             outfile, 
             overwrite,
             chunk_duration,
             overlap, 
-            preprocessors
+            preprocessors,
         ):
         '''
         Build the SEED-V dataset and save it to an HDF5 file.
@@ -118,10 +129,14 @@ class SeedVBuilder:
                     ]
                     if score_row.empty or score_row.iloc[0]["binary"] == 0:
                         continue  # Skip this movie if binary flag is 0
+
+                    # Map 5-class to 3-class - Negative, Neutral, Positive
+                    mapped_label = label_map.get(str(label))
+                    if not mapped_label:
+                        continue
                     
                     start_idx = int(start_sec * s_freq)
                     end_idx = int(end_sec * s_freq)
-
                     overlap_samples = int(n_samples * overlap)
 
                     # Iterate through chunks 
@@ -129,11 +144,12 @@ class SeedVBuilder:
                         chunk = raw_data[:, i:i+n_samples]
                         if chunk.shape[1] < n_samples: # Ignore the last chunk if it's too short
                             continue
+
                         p_group = f.require_group(str(pid))
                         s_group = p_group.require_group(str(sid))
-                        e_group = s_group.require_group(str(label))
+                        e_group = s_group.require_group(str(mapped_label))
 
-                        chunk_id = f"{pid}_{sid}_{label}_{i}"
+                        chunk_id = f"{pid}_{sid}_{label}_{mapped_label}_{i}"
                         e_group.create_dataset(chunk_id, data=chunk, chunks=True, compression="gzip")
 
         print(f"Dataset with frequency {s_freq} Hz and chunk duration {chunk_duration} sec saved to {outfile_path}.")

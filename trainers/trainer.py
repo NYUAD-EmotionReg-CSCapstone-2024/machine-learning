@@ -5,6 +5,8 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
 
 from abc import ABC
 from tqdm import tqdm
@@ -302,6 +304,32 @@ class Trainer(ABC):
         self.writer.add_figure('Training Metrics', fig, close=False)
         self.logger.info(f"Metrics plotted to {plot_path} and added to TensorBoard")
 
+    def _plot_confusion_matrix(self, all_labels, all_preds, epoch, img_save): 
+        """Plot the confusion matrix """
+        # Add confusion matrix if we have a reasonable number of classes
+        if len(np.unique(all_labels)) <= 20:  # Limit to avoid huge matrices
+            try:
+                cm = confusion_matrix(all_labels, all_preds)
+                fig, ax = plt.subplots(figsize=(10, 8))
+                sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
+                ax.set_xlabel('Predicted labels')
+                ax.set_ylabel('True labels')
+
+                if img_save: 
+                    ax.set_title('Confusion Matrix - Final')
+                else: 
+                    ax.set_title(f'Confusion Matrix - Epoch {epoch+1}')
+                self.writer.add_figure('confusion_matrix', fig, epoch)
+
+                # Save the confusion matrix to the folder
+                if img_save: 
+                    confmat_path = os.path.join(self.exp_dir, "confusion_matrix.png")
+                    plt.savefig(confmat_path)
+                    self.logger.info(f"Confusion matrix saved to {confmat_path}")
+                
+            except ImportError:
+                self.logger.warning("sklearn or seaborn not available for confusion matrix")
+
     def _setup_tensorboard(self):
         """Setup TensorBoard with custom layout for better organization."""
         layout = {
@@ -372,23 +400,7 @@ class Trainer(ABC):
                 # Log metrics to TensorBoard with better naming
                 self.writer.add_scalar('epoch/validation_loss', val_loss, epoch)
                 self.writer.add_scalar('metrics/accuracy', acc, epoch)
-                
-                # Add confusion matrix if we have a reasonable number of classes
-                if len(np.unique(all_labels)) <= 20:  # Limit to avoid huge matrices
-                    try:
-                        from sklearn.metrics import confusion_matrix
-                        import seaborn as sns # type: ignore
-                        
-                        cm = confusion_matrix(all_labels, all_preds)
-                        fig, ax = plt.subplots(figsize=(10, 8))
-                        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
-                        ax.set_xlabel('Predicted labels')
-                        ax.set_ylabel('True labels')
-                        ax.set_title(f'Confusion Matrix - Epoch {epoch+1}')
-                        
-                        self.writer.add_figure('confusion_matrix', fig, epoch)
-                    except ImportError:
-                        self.logger.warning("sklearn or seaborn not available for confusion matrix")
+                self._plot_confusion_matrix(all_labels, all_preds, epoch, False)
                 
                 epoch_time = datetime.now() - epoch_start_time
                 self.logger.info(f"Epoch: {epoch + 1}/{epochs}, "
@@ -434,7 +446,11 @@ class Trainer(ABC):
 
         # Save the full model
         self._save_full_model()
-                        
+        
+        # Save the full confusion matrix
+        acc, val_loss, all_preds, all_labels = self._evaluate()
+        self._plot_confusion_matrix(all_labels, all_preds, self.total_epochs - 1, True)
+
         total_time = datetime.now() - start_time
         self.logger.info(f"\nTraining completed successfully in {total_time}")
         self.logger.info(f"Best validation loss: {self.metrics['best_val_loss']:.4f}, "
