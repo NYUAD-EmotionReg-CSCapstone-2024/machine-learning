@@ -36,7 +36,7 @@ print('GPU:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N
 "
 
 # Array of configuration file names
-config_files=("atcnet_12s50o_xon_3c_weights")
+config_files=("atcnet_12s50o_xon_3c_cmweights")
 
 # Get the config file corresponding to the current task ID
 config_file=${config_files[$SLURM_ARRAY_TASK_ID]}

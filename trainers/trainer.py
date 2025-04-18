@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, classification_report
 import seaborn as sns
 
 from abc import ABC
@@ -307,28 +307,30 @@ class Trainer(ABC):
     def _plot_confusion_matrix(self, all_labels, all_preds, epoch, img_save): 
         """Plot the confusion matrix """
         # Add confusion matrix if we have a reasonable number of classes
-        if len(np.unique(all_labels)) <= 20:  # Limit to avoid huge matrices
-            try:
-                cm = confusion_matrix(all_labels, all_preds)
-                fig, ax = plt.subplots(figsize=(10, 8))
-                sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
-                ax.set_xlabel('Predicted labels')
-                ax.set_ylabel('True labels')
+        try:
+            cm = confusion_matrix(all_labels, all_preds)
+            fig, ax = plt.subplots(figsize=(10, 8))
+            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
+            ax.set_xlabel('Predicted labels')
+            ax.set_ylabel('True labels')
+            print("Confusion Matrix: \n", cm)
+            
+            if img_save: 
+                ax.set_title('Confusion Matrix - Final')
+            else: 
+                ax.set_title(f'Confusion Matrix - Epoch {epoch+1}')
+            self.writer.add_figure('confusion_matrix', fig, epoch)
 
-                if img_save: 
-                    ax.set_title('Confusion Matrix - Final')
-                else: 
-                    ax.set_title(f'Confusion Matrix - Epoch {epoch+1}')
-                self.writer.add_figure('confusion_matrix', fig, epoch)
+            # Save the confusion matrix to the folder
+            if img_save: 
+                confmat_path = os.path.join(self.exp_dir, "confusion_matrix.png")
+                fig.tight_layout()
+                fig.savefig(confmat_path)
+                self.logger.info(f"Confusion matrix saved to {confmat_path}")
+            plt.close(fig)
 
-                # Save the confusion matrix to the folder
-                if img_save: 
-                    confmat_path = os.path.join(self.exp_dir, "confusion_matrix.png")
-                    plt.savefig(confmat_path)
-                    self.logger.info(f"Confusion matrix saved to {confmat_path}")
-                
-            except ImportError:
-                self.logger.warning("sklearn or seaborn not available for confusion matrix")
+        except ImportError:
+            self.logger.warning("sklearn or seaborn not available for confusion matrix")
 
     def _setup_tensorboard(self):
         """Setup TensorBoard with custom layout for better organization."""
@@ -349,6 +351,37 @@ class Trainer(ABC):
         self.writer.add_custom_scalars(layout)
         # Log run name as a text in TensorBoard for easy identification
         self.writer.add_text('Run Info', f"Run Name: {self.run_name}", 0)
+
+    def _final_evaluation(self):
+        """Evaluate the final trained model on the entire validation set."""
+        final_model_path = os.path.join(self.exp_dir, self.model_filename)
+        self.model = torch.load(final_model_path)
+        self.model.to(self.device)
+        self.model.eval()
+
+        all_preds = []
+        all_labels = []
+
+        with torch.no_grad():
+            with tqdm(total=len(self.val_loader), desc="Final Model Evaluation", leave=False) as pbar:
+                for idx, (data, labels) in enumerate(self.val_loader):
+                    data, labels = data.to(self.device), labels.to(self.device)
+                    outputs = self.model(data)
+                    _, predicted = torch.max(outputs, 1)
+                    all_preds.append(predicted.cpu().numpy())
+                    all_labels.append(labels.cpu().numpy())
+                    pbar.update()
+
+        all_preds = np.concatenate(all_preds)
+        all_labels = np.concatenate(all_labels)
+
+        # Plot confusion matrix
+        self._plot_confusion_matrix(all_labels, all_preds, 101 - 1, img_save=True)
+
+        # Print and log classification report
+        report = classification_report(all_labels, all_preds, target_names=["Negative", "Neutral", "Positive"])
+        self.logger.info("\n" + report)
+
 
     def train(self, epochs, eval_every, patience, resume=False):
         """Main training loop with early stopping and periodic evaluation."""
@@ -444,12 +477,9 @@ class Trainer(ABC):
         # Plot metrics
         self._plot_metrics(eval_every)
 
-        # Save the full model
+        # Save the full model and final evaluation
         self._save_full_model()
-        
-        # Save the full confusion matrix
-        acc, val_loss, all_preds, all_labels = self._evaluate()
-        self._plot_confusion_matrix(all_labels, all_preds, self.total_epochs - 1, True)
+        self._final_evaluation()
 
         total_time = datetime.now() - start_time
         self.logger.info(f"\nTraining completed successfully in {total_time}")

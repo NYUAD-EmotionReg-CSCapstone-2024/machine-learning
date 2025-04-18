@@ -72,13 +72,13 @@ def create_trainer(config, splitter, device, fold_idx=None):
         model_filename = f"{model_name}_trained_model.pth"
     print("Output Model Filename:", model_filename)
 
-    # Added these pre-calculated weights to give more loss penalization towards neutral and positive since there are more negatives in dataset
-    # [negative, neutral, positive]
+    # Added these pre-calculated weights to give more loss penalization towards classes: [negative, neutral, positive]
+    # Test 1 Weights for balancing classes [negative, neutral, positive] = torch.tensor([0.523430585861206, 1.6582633256912231, 2.055555582046509])
+    #   - This is due to the imbalance - more negative chunks in the dataset than neutral and positive
 
-    # Weights for balancing classes [negative, neutral, positive] = torch.tensor([0.523430585861206, 1.6582633256912231, 2.055555582046509])
-    # Need to calculate weights ontop of this for a confusion matrix
-    loss_weights = torch.tensor([0.5234, 1.6583, 2.0556], dtype=torch.float32).to(device)
-    loss_fn = nn.CrossEntropyLoss(loss_weights)
+    # Test 2 
+    loss_weights = torch.tensor([0.523430585861206, 1.6582633256912231, 2.055555582046509], dtype=torch.float32).to(device)
+    loss_fn = nn.CrossEntropyLoss(weight=loss_weights)
 
     trainer = Trainer(
         train_loader=train_loader,
